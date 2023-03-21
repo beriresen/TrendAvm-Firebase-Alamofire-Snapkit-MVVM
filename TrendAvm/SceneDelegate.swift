@@ -2,11 +2,11 @@
 //  SceneDelegate.swift
 //  TrendAvm
 //
-//  Created by Berire Şen Ayvaz on 28.02.2023.
+//  Created by Berire Şen Ayvaz on 17.03.2023.
 //
 
 import UIKit
-
+import Firebase
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
@@ -16,18 +16,20 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
         // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-
-//        let loginvc = LoginVC(nibName: nil, bundle: nil)
-//        window?.rootViewController = loginvc
-//        guard let _ = (scene as? UIWindowScene) else { return }
         
-        _ = LoginVC(nibName: nil, bundle: nil)
-        guard let windowScene = (scene as? UIWindowScene) else { return }
-        window?.windowScene = windowScene
-        window?.makeKeyAndVisible()
-        let controller = LoginVC()
-        let navController = UINavigationController(rootViewController: controller)
-        window?.rootViewController = navController
+        let currentUser = Auth.auth().currentUser
+        if currentUser != nil {
+            _ = LoginVC(nibName: nil, bundle: nil)
+            guard let windowScene = (scene as? UIWindowScene) else { return }
+            window?.windowScene = windowScene
+            window?.makeKeyAndVisible()
+            let controller = LoginVC()
+            let navController = UINavigationController(rootViewController: controller)
+            window?.rootViewController = navController
+        }
+        
+       
+        
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

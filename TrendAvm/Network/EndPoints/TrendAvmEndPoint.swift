@@ -2,15 +2,13 @@
 //  TrendAvmEndPoint.swift
 //  TrendAvm
 //
-//  Created by Berire Şen Ayvaz on 2.03.2023.
+//  Created by Berire Şen Ayvaz on 20.03.2023.
 //
 
 import Alamofire
 import Foundation
 
 enum TrendAvmEndPoint{
-    case login(request: LoginRequest)
-    case addNewUser(request:SignUpRequest)
     case products
 
 }
@@ -18,10 +16,6 @@ enum TrendAvmEndPoint{
 extension TrendAvmEndPoint:Endpoint{
     var destination: Alamofire.URLEncoding.Destination? {
         switch self {
-        case .login:
-            return .httpBody
-        case .addNewUser:
-            return .httpBody
         case .products:
             return .queryString
         }
@@ -29,10 +23,6 @@ extension TrendAvmEndPoint:Endpoint{
     
     var path: String {
         switch self {
-        case .login:
-            return "/auth/login"
-        case .addNewUser:
-            return "/users"
         case .products:
             return "/products"
 
@@ -41,10 +31,6 @@ extension TrendAvmEndPoint:Endpoint{
 
     var method: HTTPMethod {
         switch self {
-        case .login:
-            return .post
-        case .addNewUser:
-            return .post
         case .products:
             return .get
         }
@@ -52,16 +38,6 @@ extension TrendAvmEndPoint:Endpoint{
     
     var param: [String : String]? {
         switch self {
-        case .login(let request):
-            return ["username": request.username,
-                    "password":request.password]
-        case .addNewUser(let request):
-            return ["email": request.email,
-                    "username": request.username,
-                    "password": request.password,
-                    "name": request.name.firstname,
-                    "address": request.address.city,
-                    "phone": request.phone]
         case .products:
             return [:]
         }
@@ -69,8 +45,6 @@ extension TrendAvmEndPoint:Endpoint{
 
     var header: HTTPHeaders {
         switch self {
-        case .login, .addNewUser:
-            return []
         case .products:
             return []
 
@@ -80,8 +54,6 @@ extension TrendAvmEndPoint:Endpoint{
     var body: [String: String]? {
         switch self {
         case .products:
-            return nil
-        case .login, .addNewUser:
             return nil
         }
     }

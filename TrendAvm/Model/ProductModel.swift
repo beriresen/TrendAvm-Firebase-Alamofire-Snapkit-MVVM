@@ -1,11 +1,12 @@
 //
-//  Product.swift
+//  ProductModel.swift
 //  TrendAvm
 //
-//  Created by Berire Şen Ayvaz on 6.03.2023.
+//  Created by Berire Şen Ayvaz on 20.03.2023.
 //
 
 import Foundation
+
 
 // MARK: - Product
 struct Product: Codable {
