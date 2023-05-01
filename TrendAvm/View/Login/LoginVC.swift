@@ -8,11 +8,14 @@
 import UIKit
 import SnapKit
 import FirebaseAuth
+import Firebase
+import FirebaseFirestore
 
 
-class LoginVC: UIViewController {
-    
-    
+class LoginVC: UIViewController, UITabBarControllerDelegate {
+    var tabbar = UITabBarController()
+    var totalProductQuantity = 0
+      var chartsSayac = 2
     var backgroundImg = UIImageView()
     var lblTitle = UILabel()
     var blurView = UIView()
@@ -30,11 +33,14 @@ class LoginVC: UIViewController {
         configureLoginVC()
         
         addTapGestureRecognizer()
+
+        tabbar.delegate  = self
         
-        let currentUser = Auth.auth().currentUser
-        if currentUser != nil{
-            let homeVC = ProductsVC()
-            self.navigationController?.pushViewController(homeVC, animated: true)
+        getDataFromFireStore()
+        if let tabItems = self.tabbar.tabBar.items{
+            let cartsTabBarItem = tabItems[1]
+            cartsTabBarItem.badgeColor = UIColor(named:"trendOrange")
+            cartsTabBarItem.badgeValue = String(4)
         }
     }
     
@@ -144,27 +150,80 @@ class LoginVC: UIViewController {
     }
     @objc  func loginClickked(sender:UIButton){
         //         indicatorView.startAnimating()
-        
-        if  txtUsername.text != "" && txtPassword.text != ""  {
-            
+        if txtUsername.text != "" && txtPassword.text != "" {
             Auth.auth().signIn(withEmail: txtUsername.text!, password: txtPassword.text!) { (authdata,error) in
-                
                 if error != nil {
                     self.makeAlert(title: "Uyarı", message: error?.localizedDescription ?? "Error" )
-                }else {
-                    let homeVC = ProductsVC()
-                    self.navigationController?.pushViewController(homeVC, animated: true)
+                } else {
+                    let vc1 = UINavigationController(rootViewController: ProductsVC())
+                    let vc2 = UINavigationController(rootViewController: CartVC())
+                    let vc3 = UINavigationController(rootViewController: CartVC())
+                    let vc4 = UINavigationController(rootViewController: LoginVC())
+                    vc1.title = "Ürünler"
+                    vc2.title = "Favoriler"
+                    vc3.title = "Sepetim"
+                    vc4.title = "Hesabım"
+                    self.tabbar.setViewControllers([vc1,vc2,vc3,vc4], animated: true)
+                    let images = ["house","heart","cart","person"]
+                    guard let items = self.tabbar.tabBar.items else {
+                        return
+                    }
+                    for x in 0..<items.count{
+                        items[x].image = UIImage(systemName: images[x])
+                    }
+                    self.tabbar.tabBar.tintColor = UIColor(named:"trendOrange")
+                    self.tabbar.modalPresentationStyle = .fullScreen
+                    
+                    if let presentedViewController = self.presentedViewController {
+                        presentedViewController.dismiss(animated: false) {
+                            self.present(self.tabbar, animated: true)
+                        }
+                    } else {
+                        self.present(self.tabbar, animated: true)
+                    }
+                    
+                    guard let items = self.tabbar.tabBar.items else { return }
+
+                    // Set badge value of the second item (sepetim)
+                    items[2].badgeValue = String(self.totalProductQuantity)
                 }
             }
-        }else {
+        } else {
             makeAlert(title:  "Uyarı", message: "Kullanıcı Adı ve Şifrenizi Kontrol Ediniz")
-            
         }
+
+    }
+            
+
+    func getDataFromFireStore(){
+        
+        let fireStoreDataBase = Firestore.firestore()
+
+        fireStoreDataBase.collection("charts").getDocuments { (snapshot, error) in
+            if let documents = snapshot?.documents {
+                
+                for document in documents {
+                    if let productQuantityString = document.data()["productQuantity"] as? String,
+                       let productQuantity = Int(productQuantityString) {
+                        self.totalProductQuantity += productQuantity
+                    }
+                }
+            } else {
+                print("Error getting documents: \(error?.localizedDescription ?? "Unknown error")")
+            }
+        }
+    }
+    
+    func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
+        print("seçilen \(tabbar.selectedIndex)")
+        
     }
     
     @objc  func SignUpClickked(sender:UIButton){
         let signInVC = SignUpVC()
         navigationController?.pushViewController(signInVC, animated: true)
+        
+        
     }
     
     
@@ -174,3 +233,4 @@ class LoginVC: UIViewController {
     }
     
 }
+

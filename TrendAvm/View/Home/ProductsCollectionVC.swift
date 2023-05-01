@@ -9,7 +9,7 @@ import UIKit
 import SnapKit
 import Kingfisher
 
-class ProductsCVC: UICollectionViewCell {
+class ProductsCollectionVC: UICollectionViewCell {
    var viewBackShadow = UIView()
    var viewBack = UIView()
    var image = UIImageView()
@@ -23,6 +23,7 @@ class ProductsCVC: UICollectionViewCell {
    var star3 = UIImageView()
    var star4 = UIImageView()
    var star5 = UIImageView()
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         

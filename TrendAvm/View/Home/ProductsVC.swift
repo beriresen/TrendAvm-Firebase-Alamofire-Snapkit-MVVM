@@ -21,25 +21,30 @@ class ProductsVC: UIViewController {
         setupViewModelObserver()
         
         viewModel.getProducts()
-        
+        title = "Ürünler"
     }
     
     
     //MARK: Component constraint ayarları
     func configure(){
         view.addSubview(collectionView)
+      //  view.addSubview(tabbar)
         collectionView.snp.makeConstraints{ (maker) in
-            maker.leading.equalTo(8)
-            maker.trailing.equalTo(-8)
-            maker.edges.equalToSuperview()
+            maker.top.equalToSuperview()
+                maker.leading.equalTo(0)
+                maker.bottom.equalToSuperview()
+                maker.trailing.equalTo(view.snp.trailing).offset(0)
         }
+        
     }
     //MARK: CollectionView Kurulum işlemleri
     func setupCollectionView(){
-        collectionView.register(ProductsCVC.self, forCellWithReuseIdentifier: "CollectionCell")
+        collectionView.register(ProductsCollectionVC.self, forCellWithReuseIdentifier: "CollectionCell")
         collectionView.delegate = self
         collectionView.dataSource = self
     }
+    
+
     //MARK: - ViewModel ve Data Binding işlemleri
     fileprivate func setupViewModelObserver() {
         
@@ -65,7 +70,7 @@ extension ProductsVC: UICollectionViewDelegate, UICollectionViewDataSource, UICo
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell:ProductsCVC = collectionView.dequeueReusableCell(withReuseIdentifier: "CollectionCell", for: indexPath) as! ProductsCVC
+        let cell:ProductsCollectionVC = collectionView.dequeueReusableCell(withReuseIdentifier: "CollectionCell", for: indexPath) as! ProductsCollectionVC
         
         let item = viewModel.products.value?[indexPath.row]
         
@@ -94,9 +99,12 @@ extension ProductsVC: UICollectionViewDelegate, UICollectionViewDataSource, UICo
         let item = viewModel.products.value?[indexPath.row]
         
         if let item {
-            let homeVC = ProductDetailVC(product: item)
-            self.navigationController?.pushViewController(homeVC, animated: true)
-            //
+            let productDetailVC = ProductDetailVC(product: item)
+            productDetailVC.hidesBottomBarWhenPushed = true
+
+            self.navigationController?.pushViewController(productDetailVC, animated: true)
+            
         }
     }
 }
+

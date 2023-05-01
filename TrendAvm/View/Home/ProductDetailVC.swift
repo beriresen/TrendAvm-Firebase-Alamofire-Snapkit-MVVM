@@ -8,12 +8,12 @@
 import UIKit
 import Kingfisher
 import Firebase
-import FirebaseFirestore
+import FirebaseStorage
 import FirebaseAuth
 
 
 class ProductDetailVC: UIViewController {
-
+    
     //Components
     var productImage = UIImageView()
     var stackView = UIStackView()
@@ -32,14 +32,14 @@ class ProductDetailVC: UIViewController {
     var star5 = UIImageView()
     var btnSepeteEkle = UIButton()
     var uuid = UUID().uuidString
-
+    
     //Objects
     private var product = Product()
     
     //inits
     init(product: Product) {
         self.product = product
-       
+        
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -49,13 +49,21 @@ class ProductDetailVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         configure()
         setupViewValue()
+        let backButton = UIBarButtonItem(title: "Geri", style: .plain, target: nil, action: nil)
+        navigationItem.backBarButtonItem = backButton
+        let rightBarButton = UIBarButtonItem(title: "Sepetim", style: .plain, target: self, action: #selector(sepetimTapped))
+        rightBarButton.tintColor = UIColor(named:"trendOrange")
+        
+        navigationItem.rightBarButtonItem = rightBarButton
     }
     
     //MARK: Setup Components
     func configure(){
+        
+        
         view.backgroundColor = .white
         
         view.addSubview(productImage)
@@ -88,25 +96,25 @@ class ProductDetailVC: UIViewController {
         stackView.axis = .vertical
         stackView.alignment = UIStackView.Alignment.center
         stackView.spacing   = 4
-        stackView.snp.makeConstraints{ (maker) in
-            maker.bottom.equalTo(-40)
-            maker.trailing.equalTo(0)
-            maker.leading.equalTo(0)
+        stackView.snp.makeConstraints{ (make) in
+            make.bottom.equalTo(-40)
+            make.trailing.equalTo(0)
+            make.leading.equalTo(0)
         }
         
         lblCategory.font = UIFont.boldSystemFont(ofSize: 16.0)
-        lblCategory.snp.makeConstraints{ (maker) in
-            maker.leading.equalTo(8)
-            maker.trailing.equalTo(-8)
-            maker.top.equalTo(8)
-            maker.height.equalTo(18)
+        lblCategory.snp.makeConstraints{ (make) in
+            make.leading.equalTo(8)
+            make.trailing.equalTo(-8)
+            make.top.equalTo(8)
+            make.height.equalTo(18)
         }
         
         lblTitle.font = UIFont.boldSystemFont(ofSize: 18.0)
-        lblTitle.snp.makeConstraints{ (maker) in
-            maker.leading.equalTo(8)
-            maker.trailing.equalTo(-8)
-            maker.height.equalTo(18)
+        lblTitle.snp.makeConstraints{ (make) in
+            make.leading.equalTo(8)
+            make.trailing.equalTo(-8)
+            make.height.equalTo(18)
         }
         
         lblDescription.lineBreakMode = NSLineBreakMode.byWordWrapping
@@ -150,11 +158,11 @@ class ProductDetailVC: UIViewController {
             maker.centerY.equalToSuperview()
         }
         
-        star4.snp.makeConstraints{ (maker) in
-            maker.leading.equalTo(star3.snp.trailing).offset(4)
-            maker.width.equalTo(12)
-            maker.height.equalTo(12)
-            maker.centerY.equalToSuperview()
+        star4.snp.makeConstraints{ (make) in
+            make.leading.equalTo(star3.snp.trailing).offset(4)
+            make.width.equalTo(12)
+            make.height.equalTo(12)
+            make.centerY.equalToSuperview()
         }
         
         star5.snp.makeConstraints{ (maker) in
@@ -162,6 +170,7 @@ class ProductDetailVC: UIViewController {
             maker.width.equalTo(12)
             maker.height.equalTo(12)
             maker.centerY.equalToSuperview()
+            
         }
         
         lblCount.snp.makeConstraints{ (maker) in
@@ -186,41 +195,86 @@ class ProductDetailVC: UIViewController {
         lblPrice.font = UIFont.boldSystemFont(ofSize: 18.0)
         lblPrice.textColor = .red
         
-        btnSepeteEkle.backgroundColor = .orange
+        btnSepeteEkle.backgroundColor = UIColor(named:"trendOrange")
         btnSepeteEkle.layer.cornerRadius = 4
         btnSepeteEkle.setTitle("Sepete Ekle", for: UIControl.State.normal)
         btnSepeteEkle.addTarget(self, action: #selector(sepeteEkle), for: .touchUpInside)
-       btnSepeteEkle.snp.makeConstraints { make in
+        btnSepeteEkle.snp.makeConstraints { make in
             make.top.equalToSuperview()
             make.bottom.equalToSuperview()
         }
     }
-    @objc  func sepeteEkle(sender:UIButton){
-       
-        let firestoreDatabase = Firestore.firestore()
-        var firestoreReference:  DocumentReference? = nil
-
-        let firestorePost = ["userId" : uuid,
-                             "chartsBy": Auth.auth().currentUser!.email!,
-                             "productId" : product.id,
-                             "productName " : product.title,
-                             "productImegeURL" : product.image,
-                             "productPrice":product.price,
-                             "productQuantity": "2",
-                             "date": FieldValue.serverTimestamp()] as [String: Any]
-        
-        firestoreReference = firestoreDatabase.collection("charts").addDocument(data: firestorePost, completion: { (error) in
-            if error != nil {
-                self.makeAlert(title: "Error!", message: error?.localizedDescription ?? "Error")
-            }else {
-              //  self.makeAlert(title: "Başarılı", message: "Ürün sepete eklendi.")
-                let chartVC = ChartVC()
-                self.navigationController?.pushViewController(chartVC, animated: true)
-            }
-        })
+    @objc  func sepetimTapped(sender:UIButton){
+        let cartVC = CartVC()
+        self.navigationController?.pushViewController(cartVC, animated: true)
         
     }
+    @objc  func sepeteEkle(sender:UIButton){
+        let firestoreDatabase = Firestore.firestore()
+        let cartsRef = firestoreDatabase.collection("carts")
+//        let chartsBy = UserSingleton.userInfo.email
+        let chartsBy = Auth.auth().currentUser?.email
 
+        let cartData = [
+            "userId":chartsBy,
+            "chartsBy": chartsBy,
+        ] as [String : Any]
+
+        let productData = [
+            "productId": self.product.id,
+            "productName": self.product.title,
+            "productImageURL": self.product.image,
+            "productPrice": self.product.price,
+            "productQuantity": 1,
+            "date": Date()
+        ] as [String : Any]
+
+        cartsRef.whereField("chartsBy", isEqualTo: chartsBy).getDocuments { (snapshot, error) in
+            if let error = error {
+                self.makeAlert(title: "Error!", message: error.localizedDescription)
+                return
+            }
+
+            if let documents = snapshot?.documents, !documents.isEmpty {
+                // Sepet zaten var, ürünü ekleyin.
+                guard let chartDocument = documents.first else {
+                    return
+                }
+                let chartReference = cartsRef.document(chartDocument.documentID)
+                chartReference.updateData(["products": FieldValue.arrayUnion([productData])]) { (error) in
+                    if let error = error {
+                        self.makeAlert(title: "Error!", message: error.localizedDescription)
+                    } else {
+                        self.makeAlert(title: "Başarılı", message: "Ürün sepete eklendi.")
+                        let chartVC = CartVC()
+                        self.navigationController?.pushViewController(chartVC, animated: true)
+                    }
+                }
+            } else {
+                // Sepet yok, yeni bir tane oluşturun.
+                let newCartReference = cartsRef.document()
+                newCartReference.setData(cartData) { (error) in
+                    if let error = error {
+                        self.makeAlert(title: "Error!", message: error.localizedDescription)
+                    } else {
+                        newCartReference.updateData(["products": [productData]]) { (error) in
+                            if let error = error {
+                                self.makeAlert(title: "Error!", message: error.localizedDescription)
+                            } else {
+                                self.makeAlert(title: "Başarılı", message: "Ürün sepete eklendi.")
+                                let chartVC = CartVC()
+                                self.navigationController?.pushViewController(chartVC, animated: true)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        
+    }
+    
     
     //MARK: Set value
     func setupViewValue(){
