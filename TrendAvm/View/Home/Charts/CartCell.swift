@@ -13,16 +13,16 @@ class CartCell: UITableViewCell {
     public var lblProductName = UILabel()
     public var lblProductPrice = UILabel()
     public var lblProductQuantity = UILabel()
-    public var quantityLabel = UILabel()
     public var plusButton = UIButton(type: .system)
     public var minusButton = UIButton(type: .system)
-    let quantityView = UIView()
+    var quantityView = UIStackView()
+    var hStack = UIStackView()
+    public var circleView = UIView(frame: CGRect(x: 0, y: 0, width: 25 , height: 25))
     
     
     static var customCell = "cell"
     let plusButtonTag = 1
     let minusButtonTag = 2
-    var hStack = UIStackView()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -53,34 +53,23 @@ class CartCell: UITableViewCell {
     
     
     private func configure(){
-        hStack.addArrangedSubview(quantityLabel)
-        hStack.addArrangedSubview(minusButton)
-        hStack.addArrangedSubview(lblProductQuantity)
-        hStack.addArrangedSubview(plusButton)
+        
+        hStack.addArrangedSubview(quantityView)
         hStack.addSpacer()
         hStack.addSpacer()
         hStack.addSpacer()
         hStack.addArrangedSubview(lblProductPrice)
         
-        plusButton.frame = CGRect(x: 50, y: 100, width: 30, height: 30)
-        plusButton.tintColor = UIColor(named: "trendOrange")
-        plusButton.setImage(UIImage(systemName: "plus.circle.fill"), for: .normal)
-        plusButton.tag = plusButtonTag
-        plusButton.addTarget(self, action: #selector(plusButtonPressed), for: .touchUpInside)
-        plusButton.translatesAutoresizingMaskIntoConstraints = false
-        
-        
-        minusButton.frame = CGRect(x: 150, y: 100, width: 30, height: 30)
-        minusButton.tintColor = UIColor(named: "trendOrange")
-        minusButton.setImage(UIImage(systemName: "minus.circle.fill"), for: .normal)
-        minusButton.tag = minusButtonTag
-        minusButton.addTarget(self, action: #selector(minusButtonPressed), for: .touchUpInside)
-        
         self.contentView.addSubview(lblProductName)
         self.contentView.addSubview(productImage)
         self.contentView.addSubview(hStack)
         
+        quantityView.addArrangedSubview(minusButton)
+        quantityView.addArrangedSubview(circleView)
+        quantityView.addArrangedSubview(plusButton)
         
+        circleView.addSubview(lblProductQuantity)
+
         hStack.axis = .horizontal
         hStack.alignment = .center
         hStack.spacing = 8
@@ -103,6 +92,7 @@ class CartCell: UITableViewCell {
             make.centerY.equalToSuperview()
             
         }
+        
         lblProductName.font = UIFont(name: "Helvetica", size: 16)
         lblProductName.snp.makeConstraints { make in
             make.leading.equalTo(productImage.snp.trailing).offset(15)
@@ -111,27 +101,65 @@ class CartCell: UITableViewCell {
             make.height.equalTo(18)
         }
         
-        lblProductPrice.font = UIFont(name: "Helvetica-Bold", size: 18)
+        quantityView.axis = .horizontal
+        quantityView.layer.borderColor = UIColor(named: "borderGray")?.cgColor
+        quantityView.layer.borderWidth = 2
+        quantityView.layer.cornerRadius = 17
+        quantityView.distribution = .fill
+        quantityView.snp.makeConstraints{ (make) in
+            make.height.equalTo(34)
+            make.width.greaterThanOrEqualTo(95) // quantityView'ı daha geniş yapın
+
+        }
+        
+        minusButton.setTitle("-", for: .normal)
+        minusButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .regular)
+        minusButton.setTitleColor(UIColor(named: "trendOrange"), for: .normal)
+        minusButton.tag = minusButtonTag
+        minusButton.addTarget(self, action: #selector(minusButtonPressed), for: .touchUpInside)
+        minusButton.snp.makeConstraints { make in
+            make.width.equalTo(25)
+            make.height.equalTo(25)
+            make.top.equalTo(quantityView.snp.top).inset(-5)
+            make.leading.equalTo(quantityView.snp.leading).inset(8)
+        }
+        
+        lblProductQuantity.text = "5"
+        lblProductQuantity.textAlignment = .center
+        lblProductQuantity.frame = CGRect(x: 0, y: 0, width: 22, height: 25)
+        lblProductQuantity.font = UIFont(name: "Helvetica", size: 14)
+        lblProductQuantity.textColor = UIColor(named:"trendOrange")
+        
+        lblProductQuantity.snp.makeConstraints { make in
+            make.height.equalTo(25)
+            make.center.equalToSuperview()
+        }
+        
+        plusButton.setTitle("+", for: .normal)
+        plusButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .regular)
+        plusButton.setTitleColor(UIColor(named: "trendOrange"), for: .normal)
+        plusButton.tag = plusButtonTag
+        plusButton.addTarget(self, action: #selector(plusButtonPressed), for: .touchUpInside)
+        plusButton.snp.makeConstraints { make in
+            make.height.equalTo(25)
+            make.width.equalTo(25)
+            make.trailing.equalTo(quantityView.snp.trailing).inset(8).offset(-2) // 2 piksel çerçeve varsayarak.plusButton'un sağ kenarı, çerçevesini de içerecek şekilde ayarlanmalıdır.
+        }
+
+        circleView.backgroundColor = UIColor(named:"trendLightOrange")
+        circleView.makeCircular()
+        circleView.snp.makeConstraints { make in
+            make.width.equalTo(25)
+            make.top.bottom.equalToSuperview().inset(5) // üst ve alt boşluklar eşit
+
+        }
+        
+        lblProductPrice.font = UIFont(name: "Helvetica-Semibold", size: 18)
         lblProductPrice.textColor = UIColor(named:"trendOrange")
         lblProductPrice.snp.makeConstraints { make in
             make.height.equalTo(18)
         }
         
-        
-        lblProductQuantity.textColor = UIColor(named:"trendOrange")
-        lblProductQuantity.font = UIFont(name: "Helvetica", size: 16)
-        lblProductQuantity.snp.makeConstraints { make in
-            make.height.equalTo(18)
-        }
-        
-        quantityLabel.font = UIFont(name: "Helvetica", size: 18)
-        quantityLabel.text = "Adet:"
-        quantityLabel.textColor = .darkGray
-        quantityLabel.font = UIFont(name: "Helvetica", size: 18)
-        quantityLabel.snp.makeConstraints { make in
-            make.height.equalTo(18)
-        }
-
     }
     
     @objc func plusButtonPressed(sender: UIButton) {
@@ -154,5 +182,12 @@ extension UIStackView {
         spacerView.setContentHuggingPriority(.defaultLow, for: .horizontal)
         spacerView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         self.addArrangedSubview(spacerView)
+    }
+}
+
+extension UIView {
+    func makeCircular() {
+        self.layer.cornerRadius = min(self.frame.size.height, self.frame.size.width) / 2.0
+        self.clipsToBounds = true
     }
 }

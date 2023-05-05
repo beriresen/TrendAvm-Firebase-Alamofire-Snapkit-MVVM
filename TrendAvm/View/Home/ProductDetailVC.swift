@@ -197,6 +197,7 @@ class ProductDetailVC: UIViewController {
         
         btnSepeteEkle.backgroundColor = UIColor(named:"trendOrange")
         btnSepeteEkle.layer.cornerRadius = 4
+        btnSepeteEkle.layer.borderColor = UIColor(named:"trendDarkOrange")?.cgColor
         btnSepeteEkle.setTitle("Sepete Ekle", for: UIControl.State.normal)
         btnSepeteEkle.addTarget(self, action: #selector(sepeteEkle), for: .touchUpInside)
         btnSepeteEkle.snp.makeConstraints { make in
@@ -225,6 +226,7 @@ class ProductDetailVC: UIViewController {
             "productName": self.product.title,
             "productImageURL": self.product.image,
             "productPrice": self.product.price,
+            "totalPrice": self.product.price,
             "productQuantity": 1,
             "date": Date()
         ] as [String : Any]

@@ -157,7 +157,7 @@ class LoginVC: UIViewController, UITabBarControllerDelegate {
                 } else {
                     let vc1 = UINavigationController(rootViewController: ProductsVC())
                     let vc2 = UINavigationController(rootViewController: CartVC())
-                    let vc3 = UINavigationController(rootViewController: CartVC())
+                    let vc3 = UINavigationController(rootViewController: LabelVC())
                     let vc4 = UINavigationController(rootViewController: LoginVC())
                     vc1.title = "Ürünler"
                     vc2.title = "Favoriler"
