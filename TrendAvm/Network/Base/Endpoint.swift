@@ -28,3 +28,8 @@ extension Endpoint {
         return "fakestoreapi.com"
     }
 }
+
+
+protocol CollPoint{
+    var collection: String { get }
+}

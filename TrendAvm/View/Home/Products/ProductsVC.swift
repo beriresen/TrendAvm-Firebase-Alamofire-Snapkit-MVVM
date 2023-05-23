@@ -48,7 +48,7 @@ class ProductsVC: UIViewController {
     //MARK: - ViewModel ve Data Binding işlemleri
     fileprivate func setupViewModelObserver() {
         
-        viewModel.products.bind{ [weak self] (alert) in
+        viewModel.products.bind{ [weak self] (result) in
             DispatchQueue.main.async {
                 self?.collectionView.reloadData()
             }

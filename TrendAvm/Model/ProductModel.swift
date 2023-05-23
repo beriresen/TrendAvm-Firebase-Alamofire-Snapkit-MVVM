@@ -24,3 +24,10 @@ struct Rating: Codable {
     var rate: Double?
     var count: Int?
 }
+
+
+struct UserInfo:Codable  {
+    var userId: String?
+    var chartsBy: String?
+       
+}

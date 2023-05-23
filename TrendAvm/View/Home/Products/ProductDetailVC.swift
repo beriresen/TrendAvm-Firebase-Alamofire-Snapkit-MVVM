@@ -10,6 +10,7 @@ import Kingfisher
 import Firebase
 import FirebaseStorage
 import FirebaseAuth
+import FirebaseFirestore
 
 
 class ProductDetailVC: UIViewController {
@@ -32,7 +33,8 @@ class ProductDetailVC: UIViewController {
     var star5 = UIImageView()
     var btnSepeteEkle = UIButton()
     var uuid = UUID().uuidString
-    
+    var favButton = UIButton()
+    var viewModel = ProductsViewModel()
     //Objects
     private var product = Product()
     
@@ -49,15 +51,16 @@ class ProductDetailVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        setupViewModelObserver()
         configure()
         setupViewValue()
+        
         let backButton = UIBarButtonItem(title: "Geri", style: .plain, target: nil, action: nil)
         navigationItem.backBarButtonItem = backButton
         let rightBarButton = UIBarButtonItem(title: "Sepetim", style: .plain, target: self, action: #selector(sepetimTapped))
         rightBarButton.tintColor = UIColor(named:"trendOrange")
-        
         navigationItem.rightBarButtonItem = rightBarButton
+    
     }
     
     //MARK: Setup Components
@@ -66,6 +69,7 @@ class ProductDetailVC: UIViewController {
         
         view.backgroundColor = .white
         
+        view.addSubview(favButton)
         view.addSubview(productImage)
         view.addSubview(stackView)
         stackView.addArrangedSubview(lblCategory)
@@ -83,14 +87,32 @@ class ProductDetailVC: UIViewController {
         stackKart.addArrangedSubview(lblPrice)
         stackKart.addArrangedSubview(btnSepeteEkle)
         
+        
+        favButton.backgroundColor = .white
+        favButton.layer.cornerRadius = 16
+        //        favButton.tintColor = UIColor(named:"trendOrange")
+        favButton.layer.shadowColor = UIColor.darkGray.cgColor // Gölge rengi
+        favButton.layer.shadowOffset = CGSize(width: 2, height: 2) // Gölgenin yönü
+        favButton.layer.shadowOpacity = 0.5 // Gölge yoğunluğu
+        favButton.layer.shadowRadius = 2 // Gölgenin keskinliği
+        favButton.clipsToBounds = false
+        favButton.tintColor = .darkGray
+        favButton.setImage(UIImage(systemName: "heart"), for: .normal)
+        favButton.addTarget(self, action: #selector(favorilereEkle), for: .touchUpInside)
+        favButton.snp.makeConstraints { make in
+            make.top.equalTo(view.safeAreaLayoutGuide.snp.top).offset(8)
+            make.trailing.equalTo(view.safeAreaLayoutGuide.snp.trailing).offset(-8)
+            make.height.equalTo(32)
+            make.width.equalTo(32)
+        }
         productImage.layoutIfNeeded()
         productImage.contentMode = .scaleAspectFit
         productImage.clipsToBounds = true
-        productImage.snp.makeConstraints{ (maker) in
-            maker.top.equalTo(8)
-            maker.leading.equalTo(8)
-            maker.trailing.equalTo(-8)
-            maker.bottom.equalTo(stackView.snp.top).offset(0)
+        productImage.snp.makeConstraints{ (make) in
+            make.top.equalTo(favButton.snp.bottom).offset(5)
+            make.leading.equalTo(8)
+            make.trailing.equalTo(-8)
+            make.bottom.equalTo(stackView.snp.top).offset(0)
         }
         
         stackView.axis = .vertical
@@ -195,89 +217,118 @@ class ProductDetailVC: UIViewController {
         lblPrice.font = UIFont.boldSystemFont(ofSize: 18.0)
         lblPrice.textColor = .red
         
+        
         btnSepeteEkle.backgroundColor = UIColor(named:"trendOrange")
         btnSepeteEkle.layer.cornerRadius = 4
         btnSepeteEkle.layer.borderColor = UIColor(named:"trendDarkOrange")?.cgColor
         btnSepeteEkle.setTitle("Sepete Ekle", for: UIControl.State.normal)
         btnSepeteEkle.addTarget(self, action: #selector(sepeteEkle), for: .touchUpInside)
+        btnSepeteEkle.sizeToFit()
         btnSepeteEkle.snp.makeConstraints { make in
             make.top.equalToSuperview()
             make.bottom.equalToSuperview()
         }
     }
     @objc  func sepetimTapped(sender:UIButton){
-        let cartVC = CartVC()
-        self.navigationController?.pushViewController(cartVC, animated: true)
-        
+        //        self.pushCartVC()
     }
-    @objc  func sepeteEkle(sender:UIButton){
-        let firestoreDatabase = Firestore.firestore()
-        let cartsRef = firestoreDatabase.collection("carts")
-//        let chartsBy = UserSingleton.userInfo.email
-        let chartsBy = Auth.auth().currentUser?.email
-
-        let cartData = [
-            "userId":chartsBy,
-            "chartsBy": chartsBy,
-        ] as [String : Any]
-
-        let productData = [
-            "productId": self.product.id,
-            "productName": self.product.title,
-            "productImageURL": self.product.image,
-            "productPrice": self.product.price,
-            "totalPrice": self.product.price,
-            "productQuantity": 1,
-            "date": Date()
-        ] as [String : Any]
-
-        cartsRef.whereField("chartsBy", isEqualTo: chartsBy).getDocuments { (snapshot, error) in
-            if let error = error {
-                self.makeAlert(title: "Error!", message: error.localizedDescription)
-                return
+    
+    @objc  func favorilereEkle(sender:UIButton){
+        if let userId = authenticateUser() {
+            
+            let favoriteData: [String: Any] = [
+                "productId": self.product.id,
+                "productRating" : self.product.rating?.rate?.description,
+                "productCount": self.product.rating?.count?.getCountProduct(),
+                "productCategory": self.product.category,
+                "productName": self.product.title,
+                "productImageURL": self.product.image,
+                "productPrice": self.product.price,
+                "date": Date()
+            ]
+            let newFavorite: [String: Any] = [
+                "userId": userId,
+                "favoriBy": userId,
+                "favoriList": [favoriteData]
+            ]
+           
+            if sender.tintColor == UIColor.darkGray {
+                sender.tintColor = UIColor(named:"trendOrange")
+                sender.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+                
+                self.viewModel.addFavorite(favoriteData: favoriteData, newFavorite: newFavorite)
+                
+            }else {
+                sender.tintColor = UIColor.darkGray
+                sender.setImage(UIImage(systemName: "heart"), for: .normal)
+                
+                self.viewModel.removeFavorite(productId: product.id ?? 0)
             }
+        }
+    }
 
-            if let documents = snapshot?.documents, !documents.isEmpty {
-                // Sepet zaten var, ürünü ekleyin.
-                guard let chartDocument = documents.first else {
-                    return
-                }
-                let chartReference = cartsRef.document(chartDocument.documentID)
-                chartReference.updateData(["products": FieldValue.arrayUnion([productData])]) { (error) in
-                    if let error = error {
-                        self.makeAlert(title: "Error!", message: error.localizedDescription)
+    @objc  func sepeteEkle(sender:UIButton){
+        if let userId = authenticateUser() {
+               let productData: [String: Any] = [
+                "productId": self.product.id,
+                "productName": self.product.title,
+                "productImageURL": self.product.image,
+                "productCategory": self.product.category,
+                "productPrice": self.product.price,
+                "totalPrice": self.product.price,
+                "productQuantity": 1,
+                "date": Date()
+            ]
+            let newCart: [String: Any] = [
+                "userId": userId,
+                "cartsBy": userId,
+                "products": [productData]
+            ]
+            self.viewModel.addCart(productData: productData, newCart: newCart)
+        }
+    }
+    fileprivate func setupViewModelObserver() {
+        viewModel.cart.bind {  [weak self] (cart) in
+            DispatchQueue.main.async {
+                //                self?.makeAlert(title: "Başarılı", message: "Ürün sepete eklendi.")
+                self?.pushCartVC()
+            }
+        }
+        viewModel.favorite.bind {  [weak self] (favorite) in
+            DispatchQueue.main.async {
+                self?.makeAlert(title: "Başarılı", message: "Ürün favorilere eklendi.")
+                //                self?.pushCartVC()
+                
+            }
+        }
+
+      viewModel.favListControl(productId: product.id ?? 0).bind { [weak self] favorite in
+            DispatchQueue.main.async {
+                if let result = favorite {
+                    let isSuccess = result.0
+                    let error = result.1
+
+                    if isSuccess {//"Ürün favori listesinde
+                        self?.favButtonOrange()
                     } else {
-                        self.makeAlert(title: "Başarılı", message: "Ürün sepete eklendi.")
-                        let chartVC = CartVC()
-                        self.navigationController?.pushViewController(chartVC, animated: true)
-                    }
-                }
-            } else {
-                // Sepet yok, yeni bir tane oluşturun.
-                let newCartReference = cartsRef.document()
-                newCartReference.setData(cartData) { (error) in
-                    if let error = error {
-                        self.makeAlert(title: "Error!", message: error.localizedDescription)
-                    } else {
-                        newCartReference.updateData(["products": [productData]]) { (error) in
-                            if let error = error {
-                                self.makeAlert(title: "Error!", message: error.localizedDescription)
-                            } else {
-                                self.makeAlert(title: "Başarılı", message: "Ürün sepete eklendi.")
-                                let chartVC = CartVC()
-                                self.navigationController?.pushViewController(chartVC, animated: true)
-                            }
+                        if let error = error {
+                            print("Hata: \(error)")
+                        } else { // "Ürün favori listesinde değil
+                            self?.favButtonGray()
                         }
                     }
                 }
             }
         }
-
-
-        
     }
-    
-    
+    func favButtonOrange(){
+       favButton.tintColor = UIColor(named:"trendOrange")
+       favButton.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+    }
+    func favButtonGray(){
+        favButton.tintColor = .darkGray
+        favButton.setImage(UIImage(systemName: "heart"), for: .normal)
+    }
     //MARK: Set value
     func setupViewValue(){
         lblPrice.text = product.price?.getPriceFormat()

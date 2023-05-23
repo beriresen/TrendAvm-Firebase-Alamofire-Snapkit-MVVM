@@ -33,4 +33,21 @@ enum AlertContext {
     static let invalidData      = AlertItem(title: "UYARI",
                                             message: "Sunucudan alınan veriler geçersizdi. Lütfen tekrar deneyin veya desteğe başvurun.",
                                             dismissButton: "Tamam")
+    static let cartCreationFailed      = AlertItem(title: "UYARI",
+                                            message: "Sepet oluşturma hatası.",
+                                            dismissButton: "Tamam")
+    
+    static let cartUpdateFailed      = AlertItem(title: "UYARI",
+                                            message: "Sepet güncelleme hatası.",
+                                            dismissButton: "Tamam")
+    static let cartAddFailed      = AlertItem(title: "UYARI",
+                                            message: "Sepete ekleme hatası.",
+                                            dismissButton: "Tamam")
+    static let queryFailed      = AlertItem(title: "UYARI",
+                                            message: "Sorgu hatası.",
+                                            dismissButton: "Tamam")
+    
+    static let userAuth      = AlertItem(title: "UYARI",
+                                            message: "Kullanıcı girişi hatası.",
+                                            dismissButton: "Tamam")
 }

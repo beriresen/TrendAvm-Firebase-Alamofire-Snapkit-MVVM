@@ -154,6 +154,7 @@ class ProductsCollectionVC: UICollectionViewCell {
             maker.trailing.equalToSuperview().offset(-4)
         }
     }
+
     //MARK: Set Data
     func showData(item:Product){
         title.text = item.title

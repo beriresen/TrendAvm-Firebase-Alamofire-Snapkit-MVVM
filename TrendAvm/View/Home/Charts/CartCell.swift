@@ -9,15 +9,17 @@ import FirebaseFirestore
 
 
 class CartCell: UITableViewCell {
-    public  var productImage = UIImageView()
-    public var lblProductName = UILabel()
-    public var lblProductPrice = UILabel()
-    public var lblProductQuantity = UILabel()
-    public var plusButton = UIButton(type: .system)
-    public var minusButton = UIButton(type: .system)
+   
+    var productImage = UIImageView()
+    var lblProductName = UILabel()
+    var lblProductPrice = UILabel()
+    var lblProductQuantity = UILabel()
+    var lblProductCategory = UILabel()
+    var plusButton = UIButton(type: .system)
+    var minusButton = UIButton(type: .system)
     var quantityView = UIStackView()
     var hStack = UIStackView()
-    public var circleView = UIView(frame: CGRect(x: 0, y: 0, width: 25 , height: 25))
+    var circleView = UIView(frame: CGRect(x: 0, y: 0, width: 25 , height: 25))
     
     
     static var customCell = "cell"

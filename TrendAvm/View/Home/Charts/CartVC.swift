@@ -12,201 +12,129 @@ import Kingfisher
 import FirebaseAuth
 
 class CartVC: UIViewController{
+    
     var itemCount = 0
     var tableView:UITableView = UITableView(frame: CGRect.zero, style: UITableView.Style.grouped)
-    var selectedProduct: String?
     var productList: [[String: Any]] = []
+    var selectedProduct: String?
     var selectedProductId:Int?
+    var selectedProductQuantity:Int?
+    var viewModel = ProductsViewModel()
+    private var product = Product()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        
-        tableView.layoutMargins = UIEdgeInsets.zero
-        tableView.separatorInset = UIEdgeInsets.zero
         configure()
         setupTableView()
+        setupViewModelObserver()
+
         NotificationCenter.default.addObserver(self, selector: #selector(handleNotification(_:)), name: Notification.Name("PriceDecrease"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleNotification(_:)), name: Notification.Name("PriceIncrease"), object: nil)
-        getProduct()
+        
     }
     init() {
         super.init(nibName: nil, bundle: nil)
         self.title = "Sepetim"
-        
-    }
-    @objc func handleNotification(_ notification: Notification) {
-        if notification.name == Notification.Name("PriceDecrease") {
-            
-            let db = Firestore.firestore()
-            
-            // carts koleksiyonu  ve  kullanıcısının ürünleri
-            let cartsRef = db.collection("carts")
-            let userCartRef = cartsRef.whereField("userId", isEqualTo: Auth.auth().currentUser?.email)
-            print("brrr\(selectedProductId)")
-            // Kullanıcının sepetindeki belgeleri alın
-            
-            userCartRef.getDocuments { (querySnapshot, error) in
-                if let error = error {
-                    print("Error getting documents: \(error.localizedDescription)")
-                } else {
-                    for document in querySnapshot!.documents {
-                        let productsArray = document.data()["products"] as! [[String: Any]]
-                        var updatedProductsArray = [[String: Any]]()
-                        for product in productsArray {
-                            var updatedProduct = product
-                            let productId = product["productId"] as! Int
-                            if productId == productId {
-                                var currentQuantity = product["productQuantity"] as! Int
-                                if currentQuantity <= 1 {
-                                    self.makeAlert(title:  "Uyarı", message: "Ürünü sepetinizden kaldırmak için sola kaydırın.")
-                                    
-                                } else {
-                                    currentQuantity -= 1 // decrease quantity by 1
-                                    let currentPrice = product["productPrice"] as! Double
-                                    let totalPrice = product["totalPrice"] as! Double - currentPrice // subtract product price from total price
-                                    updatedProduct["productQuantity"] = currentQuantity
-                                    updatedProduct["totalPrice"] = totalPrice
-                                }
-                            }
-                            updatedProductsArray.append(updatedProduct)
-                        }
-                        let updatedData: [String: Any] = ["products": updatedProductsArray]
-                        let docRef = cartsRef.document(document.documentID)
-                        docRef.updateData(updatedData) { (error) in
-                            if let error = error {
-                                print("Ürün güncellenemedi: \(error.localizedDescription)")
-                            } else {
-                                print("Ürün adeti azaltıldı.Güncelleme başarılı")
-                                self.getProduct()
-                            }
-                        }
-                    }
-                }
-            }
-            
-        }else if notification.name == Notification.Name("PriceIncrease") {
-            print("artır")
-            let db = Firestore.firestore()
-            
-            // carts koleksiyonu referansı ve "@gmail.com" kullanıcısının ürünleri
-            let cartsRef = db.collection("carts")
-            let userCartRef = cartsRef.whereField("userId", isEqualTo: Auth.auth().currentUser?.email )
-            
-            // Kullanıcının sepetindeki belgeleri alın
-            userCartRef.getDocuments { (querySnapshot, error) in
-                if let error = error {
-                    print("Error getting documents: \(error.localizedDescription)")
-                } else {
-                    for document in querySnapshot!.documents {
-                        let productsArray = document.data()["products"] as! [[String: Any]]
-                        var updatedProductsArray = [[String: Any]]()
-                        for product in productsArray {
-                            var updatedProduct = product
-                            let productId = product["productId"] as! Int
-                            if productId == productId {
-                                var currentQuantity = product["productQuantity"] as! Int
-                                currentQuantity += 1
-                                let currentPrice = product["productPrice"] as! Double
-                                let totalPrice = product["totalPrice"] as! Double + currentPrice
-                                updatedProduct["productQuantity"] = currentQuantity
-                                updatedProduct["totalPrice"] = totalPrice
-                            }
-                            updatedProductsArray.append(updatedProduct)
-                        }
-                        let updatedData: [String: Any] = ["products": updatedProductsArray]
-                        let docRef = cartsRef.document(document.documentID)
-                        docRef.updateData(updatedData) { (error) in
-                            if let error = error {
-                                print("Ürün güncellenemedi: \(error.localizedDescription)")
-                            } else {
-                                print("Ürün adeti artırıldı.Güncelleme başarılı")
-                                self.getProduct()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    func animateRevealHideActionForRow(tableView: UITableView, indexPath: IndexPath) {
-        let cell = tableView.cellForRow(at: indexPath)
-        
-        // Should be used in a block
-        var swipeLabel: UILabel? = UILabel.init(frame: CGRect(x: cell!.bounds.size.width,
-                                                              y: 0,
-                                                              width: 200,
-                                                              height: cell!.bounds.size.height))
-        
-        swipeLabel!.text = "  Swipe Me";
-        swipeLabel!.backgroundColor = UIColor.init(red: 255/255, green: 41/255, blue: 53/255, alpha: 1) // Red
-        swipeLabel!.textColor = UIColor.white
-        cell!.addSubview(swipeLabel!)
-        
-        UIView.animate(withDuration: 0.3, animations: {
-            cell!.frame = CGRect(x: cell!.frame.origin.x - 100, y: cell!.frame.origin.y, width: cell!.bounds.size.width + 100, height: cell!.bounds.size.height)
-        }) { (finished) in
-            UIView.animate(withDuration: 0.3, animations: {
-                
-                cell!.frame = CGRect(x: cell!.frame.origin.x + 100, y: cell!.frame.origin.y, width: cell!.bounds.size.width - 100, height: cell!.bounds.size.height)
-                
-            }, completion: { (finished) in
-                swipeLabel?.removeFromSuperview()
-                swipeLabel = nil;
-            })
-        }
+        let headerView = tableView.tableHeaderView!
+
     }
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+    override func viewWillAppear(_ animated: Bool) {
+        tableView.reloadData()
+    }
     func setupTableView(){
-        tableView.register(CartCell.self, forCellReuseIdentifier: CartCell.customCell)
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.register(CartCell.self, forCellReuseIdentifier: CartCell.customCell)
+      
     }
     
     
-    private func configure()  {
+     func configure()  {
         self.view.addSubview(tableView)
+         
+        tableView.layoutMargins = UIEdgeInsets.zero
+        tableView.separatorInset = UIEdgeInsets.zero
         tableView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
+         tableView.contentInset = UIEdgeInsets(top: 10, left: 0, bottom: 0, right: 0)
+
     }
     
-    func getProduct(){
-        let firestoreDatabase = Firestore.firestore()
-        let chartsBy = Auth.auth().currentUser?.email
-        let cartsRef = firestoreDatabase.collection("carts")
-        cartsRef.whereField("chartsBy", isEqualTo: chartsBy).getDocuments { (snapshot, error) in
-            if let error = error {
-                print("Error getting documents: \(error)")
-                return
-            }
+    @objc func handleNotification(_ notification: Notification) {
+        if let userId = authenticateUser() {
+            let productData: [String: Any] = [
+                "productId": product.id,
+                "productPrice": product.price,
+                "totalPrice": product.price,
+                "productQuantity": selectedProductQuantity,
+                "date": Date()
+            ]
+            let newCart: [String: Any] = [
+                "userId": userId,
+                "cartsBy": userId,
+                "products": [productData]
+            ]
             
-            guard let snapshot = snapshot else {
-                print("Error: Snapshot is nil")
-                return
+            if notification.name == Notification.Name("PriceDecrease") {
+                
+                viewModel.decreaseQuantity(productData: productData, newCart: newCart)
+
+            }else if notification.name == Notification.Name("PriceIncrease") {
+                
+                viewModel.increaseQuantity(productData: productData, newCart: newCart)
+
             }
-            
-            var products: [[String: Any]] = []
-            for document in snapshot.documents {
-                let chartData = document.data()
-                let userId = chartData["userId"] as? String ?? ""
-                let chartsBy = chartData["chartsBy"] as? String ?? ""
-                let chartProducts = chartData["products"] as? [[String: Any]] ?? []
-                products.append(contentsOf: chartProducts)
-            }
-            
-            self.productList = products
-            self.tableView.reloadData()
         }
     }
     
     
+
+    
+    fileprivate func setupViewModelObserver() {
+        viewModel.getCart { [weak self] (products: [[String: Any]]) in
+            self?.productList = products
+            self?.tableView.reloadData()
+        }
+    }
+    
+    
+    func showDeleteConfirmationAlert(indexPath: IndexPath) {
+        let alertController = UIAlertController(title: nil, message: "Ürünü sepetten silmek istediğinize emin misiniz?", preferredStyle: .actionSheet)
+        
+        let deleteAction = UIAlertAction(title: "Sil", style: .destructive) { [weak self] (_) in
+            self?.deleteProduct(at: indexPath)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Vazgeç", style: .cancel, handler: nil)
+        
+        alertController.addAction(deleteAction)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true, completion: nil)
+    }
+    
+    func deleteProduct(at indexPath: IndexPath) {
+        // Silme işlemini gerçekleştir ve tableView'i güncelle
+        // indexPath kullanarak productList'ten ilgili ürünü kaldır
+        guard let selectedProductId = selectedProductId else {
+              return // selectedProductId değeri boşsa işlem yapma
+          }
+        viewModel.removeCart(productId: selectedProductId )
+        productList.remove(at: indexPath.row)
+        tableView.reloadData()
+    }
+    
 }
+
+
 extension CartVC:UITableViewDelegate,UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return  productList.count
+        return   productList.count
     }
     
     
@@ -244,6 +172,9 @@ extension CartVC:UITableViewDelegate,UITableViewDataSource {
             priceString += " TL"
             
             cell.lblProductPrice.text = priceString
+            tableView.beginUpdates()
+            tableView.reloadRows(at: [indexPath], with: .automatic)
+            tableView.endUpdates()
         }
         
         return cell
@@ -251,14 +182,16 @@ extension CartVC:UITableViewDelegate,UITableViewDataSource {
     
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let deleteAction = UIContextualAction(style: .destructive, title: "Sil") { (action, view, completion) in
-            print("silindi")
-
-            self.makeActionSheet(title: "", message:    "Ürünü sepetten silmek istediğine emin misin?")
-            completion(true)
-        }
-        let swipeConfiguration = UISwipeActionsConfiguration(actions: [deleteAction])
-        return swipeConfiguration
+        let deleteAction = UIContextualAction(style: .destructive, title: "Sil") { [weak self] (action, view, completion) in
+               self?.showDeleteConfirmationAlert(indexPath: indexPath)
+               completion(true)
+           }
+           deleteAction.backgroundColor = .red
+           
+           let swipeConfiguration = UISwipeActionsConfiguration(actions: [deleteAction])
+           swipeConfiguration.performsFirstActionWithFullSwipe = false
+           
+           return swipeConfiguration
     }
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 90
@@ -268,8 +201,13 @@ extension CartVC:UITableViewDelegate,UITableViewDataSource {
         
         let item = productList[indexPath.row]
         selectedProductId = item["productId"] as! Int
+        if let selectedProduct = productList.first(where: { $0["productId"] as? Int == selectedProductId }) {  // Seçilen ürünün bilgilerini güncelle
+            product.id = selectedProduct["productId"] as? Int
+            product.price = selectedProduct["productPrice"] as? Double
+            selectedProductQuantity = selectedProduct["productQuantity"] as? Int
+        }
         
-        print(selectedProductId)
+        
     }
     
     

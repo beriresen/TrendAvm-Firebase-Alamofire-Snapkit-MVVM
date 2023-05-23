@@ -11,4 +11,15 @@ enum NetworkError: Error {
     case unableToComplete
     case invalidResponse
     case invalidData
+    
+}
+
+enum FirebaseError: Error {
+    case docCreationFailed
+    case docUpdateFailed
+    case docAddFailed
+    case docNotFound
+    case userAuth
+    case queryFailed(message: String)
+    
 }
