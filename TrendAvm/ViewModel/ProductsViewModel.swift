@@ -197,7 +197,7 @@ class ProductsViewModel {
                                 
                                 let cartsRef = Firestore.firestore().collection(Collections.carts.rawValue)
                                 cartsRef.document(cartId).updateData(["products": products]) { error in
-                                    if let error = error {
+                                    if error != nil {
                                         self.cart.value = (false, FirebaseError.docNotFound)
                                     } else {
                                         self.cart.value = (false, FirebaseError.docNotFound)
@@ -251,7 +251,8 @@ class ProductsViewModel {
             }
         }
     }
-    
+
+
     func getFavorites(completion: @escaping ([[String: Any]]) -> Void) {
         FirebaseManager.instance.fetchCollection(collection: .favorites) { (result: Swift.Result<Array<(documentID: String, data: [String: Any])>, FirebaseError>) in
             switch result {

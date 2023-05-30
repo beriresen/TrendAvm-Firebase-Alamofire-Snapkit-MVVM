@@ -13,9 +13,10 @@ import FirebaseFirestore
 
 
 class LoginVC: UIViewController, UITabBarControllerDelegate {
+    
     var tabbar = UITabBarController()
     var totalProductQuantity = 0
-      var chartsSayac = 2
+    var chartsSayac = 2
     var backgroundImg = UIImageView()
     var lblTitle = UILabel()
     var blurView = UIView()
@@ -25,6 +26,7 @@ class LoginVC: UIViewController, UITabBarControllerDelegate {
     var loginBttn = UIButton()
     var signInBttn = UIButton()
     var forgetBttn = UIButton()
+    var viewModel = ProductsViewModel()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -33,18 +35,61 @@ class LoginVC: UIViewController, UITabBarControllerDelegate {
         configureLoginVC()
         
         addTapGestureRecognizer()
-
+        
         tabbar.delegate  = self
         
         getDataFromFireStore()
-        if let tabItems = self.tabbar.tabBar.items{
-            let cartsTabBarItem = tabItems[1]
-            cartsTabBarItem.badgeColor = UIColor(named:"trendOrange")
-            cartsTabBarItem.badgeValue = String(4)
+        
+        navigationItem.hidesBackButton = true
+        NotificationCenter.default.addObserver(self, selector: #selector(updateBadge), name: Notification.Name("BadgeUpdated"), object: nil)
+
+
+    }
+    @objc func updateBadge(notification: Notification) {
+        if let userInfo = notification.userInfo,
+            let action = userInfo["action"] as? String,
+            let tabItems = self.tabbar.tabBar.items {
+            
+            if action == "plus" {
+                if let cartTabBarItem = tabItems.indices.contains(2) ? tabItems[2] : nil,
+                    let currentBadgeValue = cartTabBarItem.badgeValue,
+                    let quantity = Int(currentBadgeValue) {
+                    cartTabBarItem.badgeValue = (quantity + 1).description
+                } else {
+                    tabItems[2].badgeValue = "1"
+                }
+            } else if action == "minus" {
+                if let cartTabBarItem = tabItems.indices.contains(2) ? tabItems[2] : nil,
+                    let currentBadgeValue = cartTabBarItem.badgeValue,
+                    let quantity = Int(currentBadgeValue),
+                    quantity > 1 {
+                    cartTabBarItem.badgeValue = (quantity - 1).description
+                } else {
+                    tabItems[2].badgeValue = nil
+                }
+            }
         }
     }
+
+
     
-    
+    override func viewWillDisappear(_ animated: Bool) {
+        if let tabItems = self.tabbar.tabBar.items{
+            let favoriteTabBarItem = tabItems[1]
+            let cartTabBarItem = tabItems[2]
+            viewModel.getCart { [weak self] (products: [[String: Any]]) in
+                var totalQuantity = 0
+                for product in products {
+                    if let quantity = product["productQuantity"] as? Int {
+                        totalQuantity += quantity
+                    }
+                }
+                cartTabBarItem.badgeValue = totalQuantity.description
+            }
+        }
+    }
+
+
     
     private func configureLoginVC()  {
         view.addSubview(backgroundImg)
@@ -158,7 +203,7 @@ class LoginVC: UIViewController, UITabBarControllerDelegate {
                     let vc1 = UINavigationController(rootViewController: ProductsVC())
                     let vc2 = UINavigationController(rootViewController: FavoritesVC())
                     let vc3 = UINavigationController(rootViewController: CartVC())
-                    let vc4 = UINavigationController(rootViewController: LoginVC())
+                    let vc4 = UINavigationController(rootViewController: LogOutVC())
                     vc1.title = "Ürünler"
                     vc2.title = "Favoriler"
                     vc3.title = "Sepetim"
@@ -183,22 +228,30 @@ class LoginVC: UIViewController, UITabBarControllerDelegate {
                     }
                     
                     guard let items = self.tabbar.tabBar.items else { return }
-
+                    
                     // Set badge value of the second item (sepetim)
-                    items[2].badgeValue = String(self.totalProductQuantity)
+//                    items[2].badgeValue = String(self.totalProductQuantity)
+                    
+                    if let userId = self.authenticateUser() {
+                             // Set badge value of the second item (sepetim)
+                             items[2].badgeValue = String(self.totalProductQuantity)
+                         } else {
+                             // Hide badge value of the second item (sepetim)
+                             items[2].badgeValue = nil
+                         }
                 }
             }
         } else {
             makeAlert(title:  "Uyarı", message: "Kullanıcı Adı ve Şifrenizi Kontrol Ediniz")
         }
-
+        
     }
-            
-
+    
+    
     func getDataFromFireStore(){
         
         let fireStoreDataBase = Firestore.firestore()
-
+        
         fireStoreDataBase.collection("charts").getDocuments { (snapshot, error) in
             if let documents = snapshot?.documents {
                 
@@ -214,10 +267,6 @@ class LoginVC: UIViewController, UITabBarControllerDelegate {
         }
     }
     
-    func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
-        print("seçilen \(tabbar.selectedIndex)")
-        
-    }
     
     @objc  func SignUpClickked(sender:UIButton){
         let signInVC = SignUpVC()
@@ -229,8 +278,21 @@ class LoginVC: UIViewController, UITabBarControllerDelegate {
     
     @objc  func forgetnClickked(sender:UIButton){
         //        let signInVC = PasswordUpdateVC()
-        //        navigationController?.pushViewController(signInVC, animated: true)
+        //        navigationController?.pushViewController(signInVC, animated: true),
+
+        
     }
-    
+    func logout() {
+        dismiss(animated: true) {
+            self.tabbar.dismiss(animated: false) {
+                let loginVC = LoginVC()
+                let navigationController = UINavigationController(rootViewController: loginVC)
+                navigationController.modalPresentationStyle = .fullScreen
+                UIApplication.shared.windows.first?.rootViewController = navigationController
+            }
+        }
+    }
+
+
 }
 

@@ -12,6 +12,7 @@ class CartCell: UITableViewCell {
    
     var productImage = UIImageView()
     var lblProductName = UILabel()
+    var lblKargo = UILabel()
     var lblProductPrice = UILabel()
     var lblProductQuantity = UILabel()
     var lblProductCategory = UILabel()
@@ -63,6 +64,7 @@ class CartCell: UITableViewCell {
         hStack.addArrangedSubview(lblProductPrice)
         
         self.contentView.addSubview(lblProductName)
+        self.contentView.addSubview(lblKargo)
         self.contentView.addSubview(productImage)
         self.contentView.addSubview(hStack)
         
@@ -80,8 +82,8 @@ class CartCell: UITableViewCell {
         hStack.snp.makeConstraints{ (make) in
             make.leading.equalTo(lblProductName)
             make.trailing.equalToSuperview().inset(8)
-            make.top.equalTo(lblProductName.snp.bottom).offset(8) // lblProductName'in altındaki boşluğu ayarlamak için offset değeri verildi
-            make.bottom.equalToSuperview().inset(8)
+            make.top.equalTo(lblKargo.snp.bottom).offset(8) // lblProductName'in altındaki boşluğu ayarlamak için offset değeri verildi
+
         }
         
         productImage.contentMode = .scaleAspectFit
@@ -103,6 +105,15 @@ class CartCell: UITableViewCell {
             make.height.equalTo(18)
         }
         
+        lblKargo.textColor = .darkGray
+        lblKargo.font = UIFont(name: "Helvetica", size: 12)
+        lblKargo.text = "Tahmini Kargoya Teslim: 2 gün içinde"
+        lblKargo.snp.makeConstraints { make in
+            make.leading.equalTo(productImage.snp.trailing).offset(15)
+            make.trailing.equalTo(-8)
+            make.top.equalTo(lblProductName.snp.bottom).offset(5)
+            make.height.equalTo(18)
+        }
         quantityView.axis = .horizontal
         quantityView.layer.borderColor = UIColor(named: "borderGray")?.cgColor
         quantityView.layer.borderWidth = 2
@@ -111,14 +122,12 @@ class CartCell: UITableViewCell {
         quantityView.snp.makeConstraints{ (make) in
             make.height.equalTo(34)
             make.width.greaterThanOrEqualTo(95) // quantityView'ı daha geniş yapın
-
         }
         
         minusButton.setTitle("-", for: .normal)
         minusButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .regular)
         minusButton.setTitleColor(UIColor(named: "trendOrange"), for: .normal)
         minusButton.tag = minusButtonTag
-        minusButton.addTarget(self, action: #selector(minusButtonPressed), for: .touchUpInside)
         minusButton.snp.makeConstraints { make in
             make.width.equalTo(25)
             make.height.equalTo(25)
@@ -131,7 +140,6 @@ class CartCell: UITableViewCell {
         lblProductQuantity.frame = CGRect(x: 0, y: 0, width: 22, height: 25)
         lblProductQuantity.font = UIFont(name: "Helvetica", size: 14)
         lblProductQuantity.textColor = UIColor(named:"trendOrange")
-        
         lblProductQuantity.snp.makeConstraints { make in
             make.height.equalTo(25)
             make.center.equalToSuperview()
@@ -141,7 +149,6 @@ class CartCell: UITableViewCell {
         plusButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .regular)
         plusButton.setTitleColor(UIColor(named: "trendOrange"), for: .normal)
         plusButton.tag = plusButtonTag
-        plusButton.addTarget(self, action: #selector(plusButtonPressed), for: .touchUpInside)
         plusButton.snp.makeConstraints { make in
             make.height.equalTo(25)
             make.width.equalTo(25)
@@ -164,19 +171,7 @@ class CartCell: UITableViewCell {
         
     }
     
-    @objc func plusButtonPressed(sender: UIButton) {
-        if sender.tag == plusButtonTag {
-            print("plus button pressed \(sender.tag)")
-            NotificationCenter.default.post(name: Notification.Name("PriceIncrease"), object: nil, userInfo: ["value": plusButtonTag])
-        }
-    }
-    
-    @objc func minusButtonPressed(sender: UIButton) {
-        if sender.tag == minusButtonTag {
-            print("minus button pressed \(sender.tag)")
-            NotificationCenter.default.post(name: Notification.Name("PriceDecrease"), object: nil, userInfo: ["value": minusButtonTag])
-        }
-    }
+
 }
 extension UIStackView {
     func addSpacer() {

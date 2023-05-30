@@ -11,17 +11,23 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
 
-
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        //        let currentUser = Auth.auth().currentUser
-        //        if currentUser != nil {
+//                let currentUser = Auth.auth().currentUser  //eğer hala o kullanıcı giriş yaptıysa o kullanıcıyı al
+//                if currentUser != nil {   //user boşdeğilse yani çıkış yapılmamışsa direkt git
                     guard let windowScene = (scene as? UIWindowScene) else { return }
                     window = UIWindow(windowScene: windowScene)
                     window?.makeKeyAndVisible()
                     let controller = LoginVC()
                     let navController = UINavigationController(rootViewController: controller)
                     window?.rootViewController = navController
-        //        }
+//                }else {
+//                    guard let windowScene = (scene as? UIWindowScene) else { return }
+//                    window = UIWindow(windowScene: windowScene)
+//                    window?.makeKeyAndVisible()
+//                    let controller = ProductsVC()
+//                    let navController = UINavigationController(rootViewController: controller)
+//                    window?.rootViewController = navController
+//                }
        
         
     }

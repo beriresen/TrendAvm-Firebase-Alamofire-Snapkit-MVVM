@@ -21,6 +21,9 @@ class CartVC: UIViewController{
     var selectedProductQuantity:Int?
     var viewModel = ProductsViewModel()
     private var product = Product()
+    var quantityUpdateHandler: ((Int) -> Void)?
+
+    var count = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,80 +32,70 @@ class CartVC: UIViewController{
         setupTableView()
         setupViewModelObserver()
 
-        NotificationCenter.default.addObserver(self, selector: #selector(handleNotification(_:)), name: Notification.Name("PriceDecrease"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleNotification(_:)), name: Notification.Name("PriceIncrease"), object: nil)
-        
     }
+    @objc func updateBadge() {
+        // badge değerini güncelle
+        // Örneğin, badgeLabel.text = "\(badge)"
+    }
+    
     init() {
         super.init(nibName: nil, bundle: nil)
         self.title = "Sepetim"
-        let headerView = tableView.tableHeaderView!
-
+        
     }
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     override func viewWillAppear(_ animated: Bool) {
-        tableView.reloadData()
+        super.viewWillAppear(animated)
     }
+    
+    
+    
     func setupTableView(){
         tableView.delegate = self
         tableView.dataSource = self
         tableView.register(CartCell.self, forCellReuseIdentifier: CartCell.customCell)
-      
+        
     }
     
     
-     func configure()  {
+    func configure()  {
         self.view.addSubview(tableView)
-         
+        tableView.tableHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: self.tableView.bounds.size.width, height: .leastNonzeroMagnitude))
         tableView.layoutMargins = UIEdgeInsets.zero
         tableView.separatorInset = UIEdgeInsets.zero
         tableView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-         tableView.contentInset = UIEdgeInsets(top: 10, left: 0, bottom: 0, right: 0)
-
+        //         tableView.contentInset = UIEdgeInsets(top: -20, left: 0, bottom: 0, right: 0)
+        
     }
     
-    @objc func handleNotification(_ notification: Notification) {
-        if let userId = authenticateUser() {
-            let productData: [String: Any] = [
-                "productId": product.id,
-                "productPrice": product.price,
-                "totalPrice": product.price,
-                "productQuantity": selectedProductQuantity,
-                "date": Date()
-            ]
-            let newCart: [String: Any] = [
-                "userId": userId,
-                "cartsBy": userId,
-                "products": [productData]
-            ]
-            
-            if notification.name == Notification.Name("PriceDecrease") {
-                
-                viewModel.decreaseQuantity(productData: productData, newCart: newCart)
 
-            }else if notification.name == Notification.Name("PriceIncrease") {
-                
-                viewModel.increaseQuantity(productData: productData, newCart: newCart)
-
-            }
+    
+    func updateCell(at indexPath: IndexPath) {
+        if let cell = tableView.cellForRow(at: indexPath) as? CartCell {
+            // Hücreyi güncelleyin
+            // Örneğin:
+            cell.lblProductQuantity.text = "\(selectedProductQuantity)"
         }
     }
-    
-    
 
-    
     fileprivate func setupViewModelObserver() {
-        viewModel.getCart { [weak self] (products: [[String: Any]]) in
-            self?.productList = products
-            self?.tableView.reloadData()
+
+        if let userId = authenticateUser() {
+            viewModel.getCart { [weak self] (products: [[String: Any]]) in
+                self?.productList = products
+                self?.tableView.reloadData()
+            }
+        }else {
+            self.productList = []
+            self.tableView.reloadData()
         }
+
     }
-    
-    
+
     func showDeleteConfirmationAlert(indexPath: IndexPath) {
         let alertController = UIAlertController(title: nil, message: "Ürünü sepetten silmek istediğinize emin misiniz?", preferredStyle: .actionSheet)
         
@@ -122,8 +115,8 @@ class CartVC: UIViewController{
         // Silme işlemini gerçekleştir ve tableView'i güncelle
         // indexPath kullanarak productList'ten ilgili ürünü kaldır
         guard let selectedProductId = selectedProductId else {
-              return // selectedProductId değeri boşsa işlem yapma
-          }
+            return // selectedProductId değeri boşsa işlem yapma
+        }
         viewModel.removeCart(productId: selectedProductId )
         productList.remove(at: indexPath.row)
         tableView.reloadData()
@@ -158,43 +151,109 @@ extension CartVC:UITableViewDelegate,UITableViewDataSource {
                 //                }
             }
         }
+
         if let productPrice = product["totalPrice"] as? Double {
-            let integerPart = Int(productPrice)
-            let decimalPart = Int((productPrice - Double(integerPart)) * 100)
-            var priceString = ""
+            let formattedPrice = String(format: "%.2f", productPrice)
+            cell.lblProductPrice.text = "\(formattedPrice) TL"
             
-            if decimalPart == 0 {
-                priceString = "\(integerPart)"
-            } else {
-                priceString = "\(integerPart).\(decimalPart)"
-            }
+            cell.plusButton.tag = indexPath.row
+            cell.plusButton.addTarget(self, action: #selector(increaseCounter(_:)), for: .touchUpInside)
             
-            priceString += " TL"
-            
-            cell.lblProductPrice.text = priceString
-            tableView.beginUpdates()
-            tableView.reloadRows(at: [indexPath], with: .automatic)
-            tableView.endUpdates()
+            cell.minusButton.tag = indexPath.row
+            cell.minusButton.addTarget(self, action: #selector(decreaseCounter(_:)), for: .touchUpInside)
         }
         
         return cell
     }
-    
-    
-    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let deleteAction = UIContextualAction(style: .destructive, title: "Sil") { [weak self] (action, view, completion) in
-               self?.showDeleteConfirmationAlert(indexPath: indexPath)
-               completion(true)
-           }
-           deleteAction.backgroundColor = .red
-           
-           let swipeConfiguration = UISwipeActionsConfiguration(actions: [deleteAction])
-           swipeConfiguration.performsFirstActionWithFullSwipe = false
-           
-           return swipeConfiguration
+    @objc func increaseCounter(_ sender: UIButton) {
+        if let userId = authenticateUser() {
+            print("iddd \(selectedProductId)")
+            let indexPath = IndexPath(row: sender.tag, section: 0)
+            if let cell = tableView.cellForRow(at: indexPath) as? CartCell {
+                if let currentQuantity = Int(cell.lblProductQuantity.text ?? "") {
+                    let newQuantity = currentQuantity + 1
+                    cell.lblProductQuantity.text = "\(newQuantity)"
+                    
+                    if let currentPriceString = cell.lblProductPrice.text,
+                       let currentPrice = Double(currentPriceString.replacingOccurrences(of: " TL", with: "")),
+                       let totalPrice = productList[indexPath.row]["totalPrice"] as? Double {
+                        let newPrice = currentPrice + totalPrice
+                        cell.lblProductPrice.text = String(format: "%.2f TL", newPrice)
+                        
+                        let productData: [String: Any] = [
+                            "productId": selectedProductId,
+                            "totalPrice": cell.lblProductPrice.text,
+                            "productPrice": product.price,
+                            "productQuantity":  cell.lblProductQuantity.text,
+                            "date": Date()
+                        ]
+                        let newCart: [String: Any] = [
+                            "userId": userId,
+                            "cartsBy": userId,
+                            "products": [productData]
+                        ]
+                        viewModel.increaseQuantity(productData: productData, newCart: newCart)
+                        NotificationCenter.default.post(name: Notification.Name("BadgeUpdated"), object: nil, userInfo: ["action": "plus"])
+
+                    }
+                }
+            }
+        }
     }
+    @objc func decreaseCounter(_ sender: UIButton) {
+        if let userId = authenticateUser() {
+            
+            let indexPath = IndexPath(row: sender.tag, section: 0)
+            if let cell = tableView.cellForRow(at: indexPath) as? CartCell {
+                if let currentQuantity = Int(cell.lblProductQuantity.text ?? ""), currentQuantity > 1 {
+                    let newQuantity = currentQuantity - 1
+                    cell.lblProductQuantity.text = "\(newQuantity)"
+                    
+                    if let currentPriceString = cell.lblProductPrice.text,
+                       let currentPrice = Double(currentPriceString.replacingOccurrences(of: " TL", with: "")),
+                       let totalPrice = productList[indexPath.row]["totalPrice"] as? Double {
+                        let newPrice = currentPrice - totalPrice
+                        cell.lblProductPrice.text = String(format: "%.2f TL", newPrice)
+                        let productData: [String: Any] = [
+                            "productId": selectedProductId,
+                            "totalPrice": cell.lblProductPrice.text,
+                            "productPrice": product.price,
+                            "productQuantity":  cell.lblProductQuantity.text,
+                            "date": Date()
+                        ]
+                        let newCart: [String: Any] = [
+                            "userId": userId,
+                            "cartsBy": userId,
+                            "products": [productData]
+                        ]
+                        viewModel.decreaseQuantity(productData: productData, newCart: newCart)
+                        NotificationCenter.default.post(name: Notification.Name("BadgeUpdated"), object: nil, userInfo: ["action": "minus"])
+
+                    }
+                } else {
+                    // Show confirmation alert
+               showDeleteConfirmationAlert(indexPath: indexPath)
+                }
+            }
+        }
+    }
+
+
+//
+//    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+//        let deleteAction = UIContextualAction(style: .destructive, title: "Sil") { [weak self] (action, view, completion) in
+//            self?.showDeleteConfirmationAlert(indexPath: indexPath)
+//            completion(true)
+//        }
+//        deleteAction.backgroundColor = .red
+//
+//        let swipeConfiguration = UISwipeActionsConfiguration(actions: [deleteAction])
+//        swipeConfiguration.performsFirstActionWithFullSwipe = false
+//
+//        return swipeConfiguration
+//    }
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 90
+        return 100
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

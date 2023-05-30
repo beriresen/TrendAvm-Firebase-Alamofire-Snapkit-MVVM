@@ -35,6 +35,7 @@ class ProductDetailVC: UIViewController {
     var uuid = UUID().uuidString
     var favButton = UIButton()
     var viewModel = ProductsViewModel()
+    
     //Objects
     private var product = Product()
     
@@ -53,14 +54,8 @@ class ProductDetailVC: UIViewController {
         super.viewDidLoad()
         setupViewModelObserver()
         configure()
+        navBarConfigure()
         setupViewValue()
-        
-        let backButton = UIBarButtonItem(title: "Geri", style: .plain, target: nil, action: nil)
-        navigationItem.backBarButtonItem = backButton
-        let rightBarButton = UIBarButtonItem(title: "Sepetim", style: .plain, target: self, action: #selector(sepetimTapped))
-        rightBarButton.tintColor = UIColor(named:"trendOrange")
-        navigationItem.rightBarButtonItem = rightBarButton
-    
     }
     
     //MARK: Setup Components
@@ -124,6 +119,7 @@ class ProductDetailVC: UIViewController {
             make.leading.equalTo(0)
         }
         
+        lblCategory.textColor = UIColor(named:"trendBlue")
         lblCategory.font = UIFont.boldSystemFont(ofSize: 16.0)
         lblCategory.snp.makeConstraints{ (make) in
             make.leading.equalTo(8)
@@ -132,8 +128,10 @@ class ProductDetailVC: UIViewController {
             make.height.equalTo(18)
         }
         
+        lblTitle.textColor = .darkGray
         lblTitle.font = UIFont.boldSystemFont(ofSize: 18.0)
         lblTitle.snp.makeConstraints{ (make) in
+            make.top.equalTo(lblCategory.snp.bottom).offset(10)
             make.leading.equalTo(8)
             make.trailing.equalTo(-8)
             make.height.equalTo(18)
@@ -141,10 +139,12 @@ class ProductDetailVC: UIViewController {
         
         lblDescription.lineBreakMode = NSLineBreakMode.byWordWrapping
         lblDescription.numberOfLines = 2
+        lblDescription.textColor = .darkGray
+        lblDescription.font = UIFont(name: "Helvetica", size: 14)
         lblDescription.snp.makeConstraints{ (maker) in
             maker.leading.equalTo(8)
             maker.trailing.equalTo(-8)
-            maker.height.equalTo(64)
+            maker.height.equalTo(54)
         }
         
         viewPoint.snp.makeConstraints { (maker) in
@@ -229,8 +229,23 @@ class ProductDetailVC: UIViewController {
             make.bottom.equalToSuperview()
         }
     }
+    
+    
+    func navBarConfigure(){
+        
+        let backButton = UIBarButtonItem(title: "Geri", style: .plain, target: nil, action: nil)
+        navigationItem.backBarButtonItem = backButton
+        let cartBarButton = UIBarButtonItem(image: UIImage(systemName: "cart"), style: .plain, target: self, action: #selector(sepetimTapped))
+        let shareBarButton = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.up"), style: .plain, target: self, action: #selector(sepetimTapped))
+        cartBarButton.tintColor = UIColor.black
+        shareBarButton.tintColor = UIColor.black
+
+        navigationItem.rightBarButtonItems = [shareBarButton,cartBarButton]
+
+        UIStackView.appearance(whenContainedInInstancesOf: [UINavigationBar.self]).spacing = -10 //iki rightbar arasındaki boşluğu azaltır
+    }
     @objc  func sepetimTapped(sender:UIButton){
-        //        self.pushCartVC()
+                self.pushCartVC()
     }
     
     @objc  func favorilereEkle(sender:UIButton){
@@ -244,7 +259,7 @@ class ProductDetailVC: UIViewController {
                 "productName": self.product.title,
                 "productImageURL": self.product.image,
                 "productPrice": self.product.price,
-                "date": Date()
+                "productDescription": self.product.description,
             ]
             let newFavorite: [String: Any] = [
                 "userId": userId,
@@ -277,7 +292,7 @@ class ProductDetailVC: UIViewController {
                 "productPrice": self.product.price,
                 "totalPrice": self.product.price,
                 "productQuantity": 1,
-                "date": Date()
+                "date": Timestamp(date: Date())
             ]
             let newCart: [String: Any] = [
                 "userId": userId,
