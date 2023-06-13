@@ -12,7 +12,8 @@ import FirebaseAuth
 import FirebaseFirestore
 
 class ProductsViewModel {
-    
+    //Observables. Bu nesnelerin değerleri değiştiğinde, ViewControllar içerisindeki dinleyici tetikleniyor
+
     var products = Observable<[Product]>()
     var isLoading = Observable<Bool>()
     var alertItem = Observable<AlertItem>()
@@ -49,7 +50,6 @@ class ProductsViewModel {
             }
         }
     }
-    
     
     func addCart(productData: [String: Any], newCart: [String: Any]) -> Observable<(Bool, Error?)> {
         
@@ -106,6 +106,7 @@ class ProductsViewModel {
         }
         return cart
     }
+    
     func increaseQuantity(productData: [String: Any], newCart: [String: Any]) -> Observable<(Bool, Error?)> {
         guard let userId = Auth.auth().currentUser?.email else {
             cart.value = (false, FirebaseError.userAuth)
@@ -163,6 +164,7 @@ class ProductsViewModel {
         
         return cart
     }
+    
     func decreaseQuantity(productData: [String: Any], newCart: [String: Any]) -> Observable<(Bool, Error?)> {
         guard let userId = Auth.auth().currentUser?.email else {
             cart.value = (false, FirebaseError.userAuth)
@@ -223,10 +225,8 @@ class ProductsViewModel {
                 }
             }
         }
-        
         return cart
     }
-    
     
     func getCart(completion: @escaping ([[String: Any]]) -> Void) {
         FirebaseManager.instance.fetchCollection(collection: .carts) { (result: Swift.Result<Array<(documentID: String, data: [String: Any])>, FirebaseError>) in
@@ -251,7 +251,6 @@ class ProductsViewModel {
             }
         }
     }
-
 
     func getFavorites(completion: @escaping ([[String: Any]]) -> Void) {
         FirebaseManager.instance.fetchCollection(collection: .favorites) { (result: Swift.Result<Array<(documentID: String, data: [String: Any])>, FirebaseError>) in
@@ -333,6 +332,7 @@ class ProductsViewModel {
         
         return favorite
     }
+    
     func removeFavorite(productId: Int) -> Observable<(Bool, Error?)> {
         
         guard let userId = Auth.auth().currentUser?.email else {
@@ -374,9 +374,9 @@ class ProductsViewModel {
                 }
             }
         }
-        
         return favorite
     }
+    
     func removeCart(productId: Int) -> Observable<(Bool, Error?)> {
         
         guard let userId = Auth.auth().currentUser?.email else {
@@ -418,10 +418,8 @@ class ProductsViewModel {
                 }
             }
         }
-        
         return cart
     }
-    
     
     func favListControl(productId: Int) -> Observable<(Bool, Error?)> {
         guard let userId = Auth.auth().currentUser?.email else {
@@ -453,6 +451,5 @@ class ProductsViewModel {
         }
         return favorite
     }
-    
     
 }

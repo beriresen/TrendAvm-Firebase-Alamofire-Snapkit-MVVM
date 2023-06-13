@@ -120,7 +120,8 @@ class LoginVC: UIViewController, UITabBarControllerDelegate {
             make.trailing.equalToSuperview().offset(-20)
             make.height.equalTo(180)
         }
-        
+        txtUsername.autocorrectionType = .no //textview deki oto düzeltmeyi kapatır
+        txtUsername.autocapitalizationType = .none //textview büyük harfle başlamasını engeller
         txtUsername.placeholder = "username"
         txtUsername.textAlignment = .center
         txtUsername.backgroundColor = .white
@@ -186,7 +187,7 @@ class LoginVC: UIViewController, UITabBarControllerDelegate {
         
     }
     @objc  func loginClickked(sender:UIButton){
-        //         indicatorView.startAnimating()
+showProgressHUD()
         if txtUsername.text != "" && txtPassword.text != "" {
             Auth.auth().signIn(withEmail: txtUsername.text!, password: txtPassword.text!) { (authdata,error) in
                 if error != nil {
@@ -231,9 +232,13 @@ class LoginVC: UIViewController, UITabBarControllerDelegate {
                              // Hide badge value of the second item (sepetim)
                              items[2].badgeValue = nil
                          }
+                    self.hideProgressHUD()
+
                 }
             }
         } else {
+            hideProgressHUD()
+
             makeAlert(title:  "Uyarı", message: "Kullanıcı Adı ve Şifrenizi Kontrol Ediniz")
         }
         

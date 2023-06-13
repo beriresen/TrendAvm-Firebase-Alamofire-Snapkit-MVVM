@@ -303,12 +303,12 @@
 			isa = PBXGroup;
 			children = (
 				A92E424D2A366D1000EBD998 /* GoogleService-Info.plist */,
-				A92E422B2A3665E100EBD998 /* View */,
 				A92E42222A36658C00EBD998 /* Utulities */,
+				A92E42092A36647000EBD998 /* Network */,
+				A92E422B2A3665E100EBD998 /* View */,
 				A92E421F2A36657000EBD998 /* ViewModel */,
 				A92E421A2A36653D00EBD998 /* Model */,
 				A9EDBDB42A348DED00809FCF /* AppDelegate.swift */,
-				A92E42092A36647000EBD998 /* Network */,
 				A9EDBDB62A348DED00809FCF /* SceneDelegate.swift */,
 				A9EDBDB82A348DED00809FCF /* ViewController.swift */,
 				A9EDBDBA2A348DED00809FCF /* Main.storyboard */,

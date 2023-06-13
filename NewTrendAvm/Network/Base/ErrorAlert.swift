@@ -4,7 +4,11 @@
 //
 //  Created by Berire Şen Ayvaz on 11.06.2023.
 //
-
+/**
+ * Burada Apiye yapılan bir istek sonucunda herhangi bir sebepten dolayı hata mesajı göstereceğimiz zaman,
+ * sabit olarak tanımladığımız AlertItem nesnelerini çağırabiliyoruz. Herhangi bir ekranda Api kaynaklı bir hata oluştuğunda,
+ * tekrar tekrar alert yazmak yerine tek bir yerden çağırabiliyoruz.
+ */
 
 import Foundation
 import UIKit

@@ -36,10 +36,13 @@ class CartVC: UIViewController{
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        showProgressHUD()
+
         configure()
         setupTableView()
         setupViewModelObserver()
+        hideProgressHUD()
+
     }
 
     init() {
@@ -52,7 +55,7 @@ class CartVC: UIViewController{
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-
+        updateTotalPrice()
     }
     
 
@@ -96,7 +99,7 @@ class CartVC: UIViewController{
         totalStackView.axis = .vertical
         totalStackView.alignment = .leading
         totalStackView.spacing = 4
-        
+
         lblTotal.font = UIFont.systemFont(ofSize: 11.0)
         lblTotal.textColor = .darkGray
         lblTotal.text = "Toplam"
@@ -107,7 +110,9 @@ class CartVC: UIViewController{
         lblKargo.font = UIFont.systemFont(ofSize: 11.0)
         lblKargo.text = "Kargo Bedava"
         lblKargo.textColor = UIColor(named:"darkGreen")
-
+        lblKargo.snp.makeConstraints { make in
+            make.height.equalTo(15) 
+        }
         
         btnSepetiOnayla.backgroundColor = UIColor(named:"trendOrange")
         btnSepetiOnayla.layer.cornerRadius = 4
@@ -120,32 +125,6 @@ class CartVC: UIViewController{
         }
     }
 
-    func totalPrice(){
-        // totalPrice alanlarının toplamını hesapla
-        for product in productList {
-            if let productPrice = product["totalPrice"] as? Double {
-                totalPriceSum += productPrice
-            }
-        }
-
-        // Toplam fiyatı lblTotale yazdır
-        if totalPriceSum.truncatingRemainder(dividingBy: 1) != 0 {
-            formattedTotalPrice = String(format: "%.2f", totalPriceSum)
-            print("total\(formattedTotalPrice)")
-        } else {
-            formattedTotalPrice = String(format: "%.0f", totalPriceSum)
-            print("total\(formattedTotalPrice)")
-
-        }
-    }
-    
-    func updateCell(at indexPath: IndexPath) {
-        if let cell = tableView.cellForRow(at: indexPath) as? CartCell {
-            // Hücreyi güncelleyin
-            // Örneğin:
-            cell.lblProductQuantity.text = "\(selectedProductQuantity)"
-        }
-    }
 
     fileprivate func setupViewModelObserver() {
 
@@ -153,15 +132,14 @@ class CartVC: UIViewController{
             viewModel.getCart { [weak self] (products: [[String: Any]]) in
                 self?.productList = products
                 self?.tableView.reloadData()
-                self?.totalPrice()
-
-                self?.lblTotalPrice.text = self!.formattedTotalPrice + " TL"
+                self?.updateTotalPrice()
 
             }
         }else {
             self.productList = []
             self.tableView.reloadData()
-            totalPrice()
+            updateTotalPrice()
+
 
         }
 
@@ -192,6 +170,7 @@ class CartVC: UIViewController{
         productList.remove(at: indexPath.row)
         tableView.reloadData()
         NotificationCenter.default.post(name: Notification.Name("BadgeUpdated"), object: nil, userInfo: ["action": "minus"])
+        updateTotalPrice()
 
     }
     
@@ -239,119 +218,199 @@ extension CartVC:UITableViewDelegate,UITableViewDataSource {
         
         return cell
     }
-
     @objc func increaseCounter(_ sender: UIButton) {
-        let progressHUD = MBProgressHUD.showAdded(to: self.view, animated: true)
-
+        showProgressHUD()
         if let userId = authenticateUser() {
             let indexPath = IndexPath(row: sender.tag, section: 0)
-            if let cell = tableView.cellForRow(at: indexPath) as? CartCell {
-                if let currentQuantity = Int(cell.lblProductQuantity.text ?? "") {
-                    let newQuantity = currentQuantity + 1
-                    cell.lblProductQuantity.text = "\(newQuantity)"
-                    
-                    if let currentPriceString = cell.lblProductPrice.text,
-                       let currentPrice = Double(currentPriceString.replacingOccurrences(of: " TL", with: "")),
-                       let totalPrice = productList[indexPath.row]["totalPrice"] as? Double {
-                        let newPrice = currentPrice + totalPrice
-                        
-                        let formattedPrice: String
-                        if newPrice.truncatingRemainder(dividingBy: 1) != 0 {
-                            formattedPrice = String(format: "%.2f TL", newPrice)
-                        } else {
-                            formattedPrice = String(format: "%.0f TL", newPrice)
-                        }
-                        
+
+                if let cell = tableView.cellForRow(at: indexPath) as? CartCell {
+                    if let currentQuantity = Int(cell.lblProductQuantity.text ?? "") {
+                        let newQuantity = currentQuantity + 1
+                        cell.lblProductQuantity.text = "\(newQuantity)"
+
+                        let productId = productList[indexPath.row]["productId"] as? Int
+                        let productPrice = productList[indexPath.row]["productPrice"] as? Double
+                        let totalPrice = productPrice! * Double(newQuantity)
+                        let formattedPrice = String(format: "%.2f TL", totalPrice)
                         cell.lblProductPrice.text = formattedPrice
-                        
+
+                        // Update lblTotal
+                        updateTotalPrice()
+
                         let productData: [String: Any] = [
-                            "productId": selectedProductId,
-                            "totalPrice": formattedPrice,
-                            "productPrice": product.price,
-                            "productQuantity": cell.lblProductQuantity.text,
-                            "date": Date()
+                            "productId": productId,
+                            "productQuantity": newQuantity
                         ]
                         let newCart: [String: Any] = [
                             "userId": userId,
                             "cartsBy": userId,
                             "products": [productData]
                         ]
+
                         viewModel.increaseQuantity(productData: productData, newCart: newCart)
                         NotificationCenter.default.post(name: Notification.Name("BadgeUpdated"), object: nil, userInfo: ["action": "plus"])
-
                     }
                 }
-            }
         }
-        progressHUD.hide(animated: true)
-
+        hideProgressHUD()
     }
 
-    @objc func decreaseCounter(_ sender: UIButton) {
-        let progressHUD = MBProgressHUD.showAdded(to: self.view, animated: true)
 
+//    @objc func decreaseCounter(_ sender: UIButton) {
+//        showProgressHUD()
+//        if let userId = authenticateUser() {
+//
+//            let indexPath = IndexPath(row: sender.tag, section: 0)
+//
+//               if let cell = tableView.cellForRow(at: indexPath) as? CartCell {
+//                   if let currentQuantity = Int(cell.lblProductQuantity.text ?? ""), currentQuantity > 1 {
+//                       let newQuantity = currentQuantity - 1
+//                       cell.lblProductQuantity.text = "\(newQuantity)"
+//
+//                       let productId = productList[indexPath.row]["productId"] as? Int
+//                       let productPrice = productList[indexPath.row]["productPrice"] as? Double
+//                       let totalPrice = productPrice! * Double(newQuantity)
+//                       let formattedPrice = String(format: "%.2f TL", totalPrice)
+//                       cell.lblProductPrice.text = formattedPrice
+//
+//                       // Update lblTotal
+//                       updateTotalPrice()
+//
+//                       let productData: [String: Any] = [
+//                           "productId": productId,
+//                           "productQuantity": newQuantity
+//                       ]
+//                       let newCart: [String: Any] = [
+//                           "userId": userId,
+//                           "cartsBy": userId,
+//                           "products": [productData]
+//                       ]
+//
+//                       viewModel.decreaseQuantity(productData: productData, newCart: newCart)
+//                       NotificationCenter.default.post(name: Notification.Name("BadgeUpdated"), object: nil, userInfo: ["action": "minus"])
+//
+//                   } else {
+//                       showDeleteConfirmationAlert(indexPath: indexPath)
+//                   }
+//               }
+//        }
+//        hideProgressHUD()
+//    }
+    
+    @objc func decreaseCounter(_ sender: UIButton) {
+        showProgressHUD()
+        
         if let userId = authenticateUser() {
             let indexPath = IndexPath(row: sender.tag, section: 0)
+
             if let cell = tableView.cellForRow(at: indexPath) as? CartCell {
                 if let currentQuantity = Int(cell.lblProductQuantity.text ?? ""), currentQuantity > 1 {
                     let newQuantity = currentQuantity - 1
                     cell.lblProductQuantity.text = "\(newQuantity)"
-                    
-                    if let currentPriceString = cell.lblProductPrice.text,
-                       let currentPrice = Double(currentPriceString.replacingOccurrences(of: " TL", with: "")),
-                       let totalPrice = productList[indexPath.row]["totalPrice"] as? Double {
-                        let newPrice = currentPrice - totalPrice
-                        
-                        let formattedPrice: String
-                        if newQuantity < 1 {
-                            formattedPrice = "0 TL"
-                        } else if newPrice < 0 {
-                            formattedPrice = "0 TL"
-                        } else if newPrice.truncatingRemainder(dividingBy: 1) != 0 {
-                            formattedPrice = String(format: "%.2f TL", newPrice)
-                        } else {
-                            formattedPrice = String(format: "%.0f TL", newPrice)
-                        }
-                        
-                        cell.lblProductPrice.text = formattedPrice
-                        
-                        let productData: [String: Any] = [
-                            "productId": selectedProductId,
-                            "totalPrice": formattedPrice,
-                            "productPrice": product.price,
-                            "productQuantity": cell.lblProductQuantity.text,
-                            "date": Date()
-                        ]
-                        let newCart: [String: Any] = [
-                            "userId": userId,
-                            "cartsBy": userId,
-                            "products": [productData]
-                        ]
-                        viewModel.decreaseQuantity(productData: productData, newCart: newCart)
-                        NotificationCenter.default.post(name: Notification.Name("BadgeUpdated"), object: nil, userInfo: ["action": "minus"])
-                    }
+
+                    let productId = productList[indexPath.row]["productId"] as? Int
+                    let productPrice = productList[indexPath.row]["productPrice"] as? Double
+                    let totalPrice = productPrice! * Double(newQuantity)
+                    let formattedPrice = String(format: "%.2f TL", totalPrice)
+                    cell.lblProductPrice.text = formattedPrice
+
+                    // Update lblTotal
+                    updateTotalPrice()
+
+                    let productData: [String: Any] = [
+                        "productId": productId,
+                        "productQuantity": newQuantity
+                    ]
+                    let newCart: [String: Any] = [
+                        "userId": userId,
+                        "cartsBy": userId,
+                        "products": [productData]
+                    ]
+
+                    viewModel.decreaseQuantity(productData: productData, newCart: newCart)
+                    NotificationCenter.default.post(name: Notification.Name("BadgeUpdated"), object: nil, userInfo: ["action": "minus"])
                 } else {
-                    // Show confirmation alert
-                    showDeleteConfirmationAlert(indexPath: indexPath)
+                    showDeleteConfirmationAlert2(indexPath: indexPath)
                 }
             }
         }
-        progressHUD.hide(animated: true)
 
+        hideProgressHUD()
+    }
+
+    func showDeleteConfirmationAlert2(indexPath: IndexPath) {
+        let alert = UIAlertController(title: "Ürünü Sil", message: "Ürünü sepetten silmek istediğinize emin misiniz?", preferredStyle: .alert)
+
+        let deleteAction = UIAlertAction(title: "Sil", style: .destructive) { _ in
+            let productId = self.productList[indexPath.row]["productId"] as? Int
+            self.deleteProduct2(productId: productId)
+            self.productList.remove(at: indexPath.row)
+            self.tableView.deleteRows(at: [indexPath], with: .fade)
+            self.updateTotalPrice()
+            NotificationCenter.default.post(name: Notification.Name("BadgeUpdated"), object: nil, userInfo: ["action": "delete"])
+        }
+
+        let cancelAction = UIAlertAction(title: "Kapat", style: .cancel, handler: nil)
+
+        alert.addAction(deleteAction)
+        alert.addAction(cancelAction)
+
+        present(alert, animated: true, completion: nil)
+    }
+
+    func deleteProduct2(productId: Int?) {
+        if let id = productId {
+            viewModel.removeCart(productId: id )
+            tableView.reloadData()
+            NotificationCenter.default.post(name: Notification.Name("BadgeUpdated"), object: nil, userInfo: ["action": "minus"])
+            updateTotalPrice()
+        } else {
+            // productId değeri geçerli değil
+            // Hata durumunu işleyebilirsiniz
+        }
+    }
+
+    func updateTotalPrice() {
+        var total: Double = 0.0
+        for index in 0..<tableView.numberOfRows(inSection: 0) {
+            let indexPath = IndexPath(row: index, section: 0)
+            if let cell = tableView.cellForRow(at: indexPath) as? CartCell {
+                if let productPrice = productList[indexPath.row]["productPrice"] as? Double,
+                    let currentQuantity = Int(cell.lblProductQuantity.text ?? "") {
+                    total += productPrice * Double(currentQuantity)
+                } else {
+                    print("Hata: Ürün fiyatı veya miktarı alınamadı.")
+                }
+            } else {
+                print("Hata: Tablo hücresi alınamadı.")
+            }
+        }
+        let formattedTotal = String(format: "%.2f TL", total)
+        lblTotalPrice.text = formattedTotal
     }
 
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let deleteAction = UIContextualAction(style: .destructive, title: "Sil") { [weak self] (action, view, completion) in
-            self?.showDeleteConfirmationAlert(indexPath: indexPath)
-            completion(true)
+        let deleteAction = UIContextualAction(style: .destructive, title: "Sil") { [weak self] (_, _, completionHandler) in
+            guard let self = self else {
+                completionHandler(false)
+                return
+            }
+            
+            self.showDeleteConfirmationAlert2(indexPath: indexPath)
+            
+            completionHandler(true)
         }
+        
+        deleteAction.image = UIImage(systemName: "trash")
         deleteAction.backgroundColor = .red
-
-        let swipeConfiguration = UISwipeActionsConfiguration(actions: [deleteAction])
-        swipeConfiguration.performsFirstActionWithFullSwipe = false
-
-        return swipeConfiguration
+        
+        let configuration = UISwipeActionsConfiguration(actions: [deleteAction])
+        configuration.performsFirstActionWithFullSwipe = false
+        
+        return configuration
     }
+
+
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 100

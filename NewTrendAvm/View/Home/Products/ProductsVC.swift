@@ -97,7 +97,6 @@ extension ProductsVC: UICollectionViewDelegate, UICollectionViewDataSource, UICo
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let item = viewModel.products.value?[indexPath.row]
-        print(item)
         if let item {
             let productDetailVC = ProductDetailVC(product: item)
             productDetailVC.hidesBottomBarWhenPushed = true

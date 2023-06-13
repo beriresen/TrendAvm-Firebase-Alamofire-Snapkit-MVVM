@@ -18,11 +18,9 @@ class SignUpVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         view.backgroundColor = UIColor(named: "loginButtonColor")
         configureSignUpVC()
         addTapGestureRecognizer()
- 
     }
     
     private func configureSignUpVC()  {
@@ -49,6 +47,8 @@ class SignUpVC: UIViewController {
             make.leading.equalTo(view.safeAreaLayoutGuide.snp.leading).offset(20)
         }
         
+        txtEmail.autocorrectionType = .no //textview deki oto düzeltmeyi kapatır
+        txtEmail.autocapitalizationType = .none //textview büyük harfle başlamasını engeller
         txtEmail.placeholder = "email"
         txtEmail.textAlignment = .center
         txtEmail.backgroundColor = .white
@@ -88,10 +88,12 @@ class SignUpVC: UIViewController {
     }
 
     @objc  func signUpClickked(sender:UIButton){
+        showProgressHUD()
         if  txtEmail.text != "" && txtPassword.text != ""  {
             
             Auth.auth().createUser(withEmail: txtEmail.text!, password: txtPassword.text!) { (authdata,error) in
-                
+                self.hideProgressHUD()
+
                 if error != nil {
                     self.makeAlert(title:  "Uyarı", message: "Kullanıcı Adı ve Şifrenizi Kontrol Ediniz")
 

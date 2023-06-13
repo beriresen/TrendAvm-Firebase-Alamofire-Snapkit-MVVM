@@ -297,6 +297,8 @@ class ProductDetailVC: UIViewController {
                 "products": [productData]
             ]
             self.viewModel.addCart(productData: productData, newCart: newCart)
+            NotificationCenter.default.post(name: Notification.Name("BadgeUpdated"), object: nil, userInfo: ["action": "plus"])
+
         }
     }
     

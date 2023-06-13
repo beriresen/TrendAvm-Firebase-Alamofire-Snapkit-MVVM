@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import FirebaseAuth
+import MBProgressHUD
 
 extension UIViewController{
     
@@ -22,4 +23,12 @@ extension UIViewController{
         }
         return userId
     }
+    func showProgressHUD() {
+           let progressHUD = MBProgressHUD.showAdded(to: self.view, animated: true)
+           progressHUD.label.text = "Loading"
+       }
+
+       func hideProgressHUD() {
+           MBProgressHUD.hide(for: self.view, animated: true)
+       }
 }

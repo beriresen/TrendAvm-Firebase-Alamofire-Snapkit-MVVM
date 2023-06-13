@@ -4,7 +4,19 @@
 //
 //  Created by Berire Şen Ayvaz on 11.06.2023.
 //
-
+/**
+ *NetworkManager sınıfımızda Api isteklerimizi gerçekleştiriyoruz.
+ *Burada Api istekleri için kullandığımız kütüphane Alamofire.
+ *Alamofire kütüphanesini kullanarak bir apinin tüm fonksiyonlarında aynı kod ile çalışabileceğimiz bir yapı oluşturuldu.
+ *
+ *Fetch fonksiyonu 2 adet parametre almakta.
+ *Parametrelerden biri TrendAvmEndPoint içerisinde tanımlanan Enum
+ *Parametrelerden diğeri Generic bir yapı kullanıldığı için Apiden gelen yanıtı istediğimiz nesneye dönüştürülmesi için kullanılıyor.
+ *İlk parametrede istenilen enum içerisinde Alamofire kütüphanesi için gerekli Scheme, host, path vb. bilgiler bulunmakta.
+ *
+ *Dönüş tipi ise, istek başarılıysa belirttiğimiz Generic type nesnesi dönüyor,
+ *Eğer herhangi bir hata ile karşılaşılmış ise Tanımladığımız NetworkError tipinde enum dönüyor. Bu dönen enum'a göre Switch-Case içerisinde ErrorAlert nesnesi kullanılıyor.
+ */
 import Foundation
 import Alamofire
 import SwiftyJSON
