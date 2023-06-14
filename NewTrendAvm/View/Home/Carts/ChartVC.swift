@@ -347,7 +347,7 @@ extension CartVC:UITableViewDelegate,UITableViewDataSource {
             self.productList.remove(at: indexPath.row)
             self.tableView.deleteRows(at: [indexPath], with: .fade)
             self.updateTotalPrice()
-            NotificationCenter.default.post(name: Notification.Name("BadgeUpdated"), object: nil, userInfo: ["action": "delete"])
+            NotificationCenter.default.post(name: Notification.Name("BadgeUpdated"), object: nil, userInfo: ["action": "minus"])
         }
 
         let cancelAction = UIAlertAction(title: "Kapat", style: .cancel, handler: nil)

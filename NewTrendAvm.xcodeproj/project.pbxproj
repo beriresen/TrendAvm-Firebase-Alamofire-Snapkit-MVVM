@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A905E0D12A39A7F300C13BB2 /* LoginVCUnitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A905E0D02A39A7F300C13BB2 /* LoginVCUnitTests.swift */; };
+		A905E0D32A39A82A00C13BB2 /* ProductsVCUnitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A905E0D22A39A82A00C13BB2 /* ProductsVCUnitTests.swift */; };
 		A92E41FA2A36638500EBD998 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A92E41F92A36638500EBD998 /* Alamofire */; };
 		A92E41FD2A3663BC00EBD998 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = A92E41FC2A3663BC00EBD998 /* Kingfisher */; };
 		A92E42002A3663F400EBD998 /* MBProgressHUD in Frameworks */ = {isa = PBXBuildFile; productRef = A92E41FF2A3663F400EBD998 /* MBProgressHUD */; };
@@ -72,6 +74,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A905E0D02A39A7F300C13BB2 /* LoginVCUnitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginVCUnitTests.swift; sourceTree = "<group>"; };
+		A905E0D22A39A82A00C13BB2 /* ProductsVCUnitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsVCUnitTests.swift; sourceTree = "<group>"; };
 		A92E420C2A36649D00EBD998 /* TrendAvmEndPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendAvmEndPoint.swift; sourceTree = "<group>"; };
 		A92E420E2A3664B300EBD998 /* FirebaseEndPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseEndPoint.swift; sourceTree = "<group>"; };
 		A92E42102A3664D600EBD998 /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
@@ -324,6 +328,8 @@
 			isa = PBXGroup;
 			children = (
 				A9EDBDCB2A348DEE00809FCF /* NewTrendAvmTests.swift */,
+				A905E0D02A39A7F300C13BB2 /* LoginVCUnitTests.swift */,
+				A905E0D22A39A82A00C13BB2 /* ProductsVCUnitTests.swift */,
 			);
 			path = NewTrendAvmTests;
 			sourceTree = "<group>";
@@ -524,7 +530,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A905E0D12A39A7F300C13BB2 /* LoginVCUnitTests.swift in Sources */,
 				A9EDBDCC2A348DEE00809FCF /* NewTrendAvmTests.swift in Sources */,
+				A905E0D32A39A82A00C13BB2 /* ProductsVCUnitTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
